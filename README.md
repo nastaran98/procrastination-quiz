@@ -155,3 +155,4 @@ The app ships a web manifest and scalable icon as a foundation for a future PWA;
 
 This framework is for educational self-reflection. It is not a clinically validated diagnostic instrument, and pattern fit is not a clinical confidence or probability.
 # procrastination-quiz
+# procrastination-quiz

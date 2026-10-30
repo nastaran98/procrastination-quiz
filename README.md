@@ -154,3 +154,4 @@ Playwright starts its own **production** server on **3100**, avoiding the normal
 The app ships a web manifest and scalable icon as a foundation for a future PWA; offline caching/service-worker support is not enabled.
 
 This framework is for educational self-reflection. It is not a clinically validated diagnostic instrument, and pattern fit is not a clinical confidence or probability.
+# procrastination-quiz

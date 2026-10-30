@@ -1,0 +1,37 @@
+import { describe, expect, it } from "vitest";
+import { scoreQuiz, validateAnswers } from "@/lib/archetypes/scoring";
+import { nextFollowUp } from "@/lib/archetypes/follow-ups";
+import { questions } from "@/data/questions";
+import { archetypeIds, type QuizAnswer } from "@/types";
+import { clearAnswers, mixedAnswers } from "./fixtures";
+const score = (answers: QuizAnswer[], id = "perfectionist") => scoreQuiz(answers).scores.find(s => s.id === id)!;
+describe("weighted pattern matching", () => {
+  it("awards two points and a primary selection", () => { expect(score([{ questionId: 1, primary: "perfectionist" }])).toMatchObject({ points: 2, primary: 1, secondary: 0, fitScore: 1 }); });
+  it("awards one point for a different secondary", () => { expect(score([{ questionId: 1, primary: "dreamer", secondary: "perfectionist" }])).toMatchObject({ points: 1, primary: 0, secondary: 1, fitScore: .5 }); });
+  it("rejects duplicate selections", () => { expect(() => validateAnswers([{ questionId: 1, primary: "perfectionist", secondary: "perfectionist" }])).toThrow(); });
+  it("rejects unavailable options, missing primary and invalid question IDs", () => {
+    for (const answer of [{ questionId: 1, primary: "overdoer" }, { questionId: 1, secondary: "perfectionist" }, { questionId: 11, primary: "perfectionist" }] as QuizAnswer[]) expect(() => validateAnswers([answer])).toThrow();
+  });
+  it("rejects duplicate question records", () => { expect(() => scoreQuiz([clearAnswers[0], clearAnswers[0]])).toThrow(); });
+  it("excludes skipped questions from opportunities", () => { const s = score([{ questionId: 1, skipped: true }, { questionId: 3, primary: "perfectionist" }]); expect(s.opportunities).toBe(1); expect(s.fitScore).toBe(1); });
+  it("counts None as an answered exposure worth zero points", () => { const result = scoreQuiz([{ questionId: 1, none: true }]); expect(result.completed).toBe(1); expect(result.noneCount).toBe(1); expect(result.scores.find(s => s.id === "perfectionist")).toMatchObject({ opportunities: 1, points: 0 }); });
+  it("keeps none and skip exclusive", () => { expect(() => scoreQuiz([{ questionId: 1, none: true, primary: "dreamer" }])).toThrow(); expect(() => scoreQuiz([{ questionId: 1, none: true, skipped: true }])).toThrow(); });
+  it("normalizes with actual exposures, not question count", () => { expect(score([{ questionId: 1, primary: "perfectionist" }, { questionId: 2, primary: "overdoer" }, { questionId: 3, none: true }])).toMatchObject({ points: 2, opportunities: 2, fitScore: .5 }); });
+  it("handles zero opportunities without NaN", () => { expect(scoreQuiz([]).scores.every(s => s.fitScore === 0)).toBe(true); });
+  it("ranks highest fit first and produces a clear primary", () => { const result = scoreQuiz(clearAnswers); expect(result.status).toBe("clear"); expect(result.primary).toBe("perfectionist"); expect(result.scores[0].fitScore).toBe(1); expect(result.secondary).toBeUndefined(); });
+  it("uses primary selections before raw points for ties", () => { const result = scoreQuiz([{ questionId: 1, primary: "perfectionist", secondary: "worrier" }, { questionId: 3, primary: "dreamer", secondary: "worrier" }]); const perf = result.scores.findIndex(s => s.id === "perfectionist"); const worry = result.scores.findIndex(s => s.id === "worrier"); expect(perf).toBeLessThan(worry); });
+  it("returns a deterministic mixed profile for a tie", () => { const result = scoreQuiz(mixedAnswers); expect(result.status).toBe("mixed"); expect(result.primary).toBe("perfectionist"); expect(result.secondary).toBe("worrier"); expect(result.scores[0].fitScore).toBe(.6); });
+  it("does not force a pattern with fewer than eight completed questions", () => { expect(scoreQuiz(clearAnswers.slice(0, 7))).toMatchObject({ status: "insufficient", primary: undefined }); });
+  it("does not force a pattern with four None responses", () => { const answers = clearAnswers.map((a, i) => [1, 3, 5, 7].includes(i) ? { questionId: a.questionId, none: true } : a); expect(scoreQuiz(answers).status).toBe("insufficient"); });
+  it("detects weak top fit and fewer than two selections", () => { const ids = ["perfectionist", "overdoer", "worrier", "self_doubter", "approval_seeker", "dreamer", "overwhelmed", "defier", "crisis_maker", "instant_gratification"] as const; const spread = ids.map((primary, i) => ({ questionId: i + 1, primary })); expect(scoreQuiz(spread).status).toBe("insufficient"); expect(scoreQuiz(spread).scores[0].selections).toBe(1); });
+  it("offers tentative rather than clear for adequate but weaker evidence", () => {
+    const answers: QuizAnswer[] = [ { questionId: 1, primary: "perfectionist" }, { questionId: 2, primary: "defier" }, { questionId: 3, primary: "perfectionist" }, { questionId: 4, primary: "approval_seeker" }, { questionId: 5, primary: "overdoer" }, { questionId: 6, primary: "dreamer" }, { questionId: 7, primary: "self_doubter" }, { questionId: 8, primary: "worrier" }, { questionId: 9, primary: "shame_spiraler" }, { questionId: 10, primary: "purpose_drifter" } ];
+    expect(scoreQuiz(answers).status).toBe("tentative");
+  });
+  it("scores adaptive A with an exposure for each compared pattern", () => { const result = scoreQuiz(mixedAnswers, [{ a: "perfectionist", b: "worrier", choice: "a", kind: "blocker" }]); expect(result.scores[0]).toMatchObject({ points: 8, opportunities: 6, primary: 3 }); expect(result.scores.find(s => s.id === "worrier")).toMatchObject({ points: 6, opportunities: 6 }); expect(result.status).toBe("clear"); });
+  it("scores Both and Neither without inflating points or skipping exposure", () => { const result = scoreQuiz(mixedAnswers, [{ a: "perfectionist", b: "worrier", choice: "both", kind: "blocker" }, { a: "perfectionist", b: "worrier", choice: "neither", kind: "strategy" }]); expect(result.scores[0]).toMatchObject({ points: 7, opportunities: 7, fitScore: .5 }); expect(result.status).toBe("mixed"); expect(nextFollowUp(result, 2)).toBeNull(); });
+  it("rejects invalid comparisons and too many follow-ups", () => { expect(() => scoreQuiz(mixedAnswers, [{ a: "worrier", b: "worrier", choice: "a", kind: "blocker" }])).toThrow(); expect(() => scoreQuiz(mixedAnswers, Array(3).fill({ a: "perfectionist", b: "worrier", choice: "both", kind: "blocker" }))).toThrow(); });
+  it("shows a secondary only with meaningful fit and multiple selections", () => { const answers = clearAnswers.map(a => ({ ...a, secondary: [1, 4, 5, 8].includes(a.questionId) ? "approval_seeker" as const : undefined })); const result = scoreQuiz(answers); expect(result.secondary).toBeUndefined(); const strong = mixedAnswers; expect(scoreQuiz(strong).secondary).toBe("worrier"); });
+  it("offers only targeted anonymous blocker/strategy comparisons", () => { const follow = nextFollowUp(scoreQuiz(mixedAnswers), 0)!; expect(follow.a).toBe("perfectionist"); expect(follow.kind).toBe("blocker"); expect(follow.textA).not.toContain("Perfectionist"); expect(nextFollowUp(scoreQuiz(mixedAnswers), 1)?.kind).toBe("strategy"); expect(nextFollowUp(scoreQuiz(clearAnswers), 0)).toBeNull(); });
+  it("exposes each of the twelve archetypes exactly five times", () => { expect(questions).toHaveLength(10); for (const id of archetypeIds) expect(questions.flatMap(q => q.options).filter(o => o.archetype === id), id).toHaveLength(5); for (const q of questions) expect(new Set(q.options.map(o => o.archetype)).size).toBe(6); });
+});

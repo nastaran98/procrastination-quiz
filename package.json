@@ -1,0 +1,59 @@
+{
+  "name": "procrastinot",
+  "version": "1.0.0",
+  "private": true,
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "^8.0.2",
+      "effect": "^3.20.0"
+    }
+  },
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "prisma generate && next build",
+    "start": "next start --hostname 0.0.0.0",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@fontsource/manrope": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
+    "@fontsource/vazirmatn": "^5.3.0",
+    "@next/env": "^16.4.3",
+    "@prisma/client": "6.19.0",
+    "lucide-react": "^0.468.0",
+    "motion": "^12.23.24",
+    "next": "^16.1.6",
+    "openai": "^6.9.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.56.1",
+    "@tailwindcss/postcss": "^4.1.17",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.1.6",
+    "jsdom": "^27.2.0",
+    "prisma": "6.19.0",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.13"
+  }
+}

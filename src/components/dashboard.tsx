@@ -1,0 +1,26 @@
+"use client";
+import Link from "next/link";
+import { ArrowRight, Award, Check, Clock3, MessageCircle, Sparkles, Star } from "lucide-react";
+import { useApp, useResult } from "@/store/provider";
+import { getAchievements, getLevel } from "@/lib/gamification/xp";
+import { archetypes } from "@/data/archetypes";
+import { exercises } from "@/data/exercises";
+import { Mascot } from "@/components/mascot";
+import { Loading, Progress, Reveal } from "@/components/ui";
+import { ChallengeCards } from "@/components/games";
+import { Localized, useLanguage } from "@/i18n/provider";
+export function Dashboard() {
+  const { profile, openChat } = useApp(); const result = useResult();
+  const { date } = useLanguage();
+  if (!profile) return <Loading />;
+  const a = result?.primary ? archetypes[result.primary] : null;
+  const level = getLevel(profile.events); const badges = getAchievements(profile.events);
+  const focus = Math.round(profile.events.reduce((sum, e) => sum + e.focusMinutes, 0) * 10) / 10;
+  return <Localized><section className="container dashboard-page page-section"><div className="dashboard-welcome"><div><span className="eyebrow">WELCOME TO YOUR LITTLE CORNER</span><h1>Every small step<br />is a step forward<span className="purple-text">.</span></h1><p>No catching up. No perfect days. Just your own pace.</p></div><span className="welcome-doodle" aria-hidden="true">✧</span></div><div className="dashboard-top-grid"><Reveal className="my-character-card" ><div><span className="eyebrow">MY CHARACTER</span><h2>{a?.name || "A story still unfolding"}</h2><p>{a ? a.description : "A little self-discovery can help you find a kinder way forward."}</p><Link className="text-link" href={a ? "/results" : "/quiz"}>{a ? "Revisit my pattern" : "Meet my character"} <ArrowRight size={15} /></Link></div><Mascot id={a?.id || "dreamer"} float /></Reveal><Reveal className="growth-level-card"><div className="level-top"><span className="level-icon"><SproutSymbol /></span><span className="eyebrow">MY GROWTH JOURNEY</span></div><h2>{level.name}</h2><div className="level-label"><span>Level {level.number}</span><strong>{level.xp} XP</strong></div><Progress value={level.progress} label="Level progress" /><p>{level.next ? `${level.next - level.xp} XP to your next little chapter` : "Look at all the little steps you’ve taken."}</p><div className="growth-stats"><div><Check size={18} /><strong>{profile.events.length}</strong><span>challenges done</span></div><div><Star size={18} /><strong>{profile.wins.length}</strong><span>wins celebrated</span></div><div><Clock3 size={18} /><strong>{focus}</strong><span>focus minutes</span></div></div></Reveal></div>
+    <Reveal className="stuck-banner"><div className="stuck-icon"><MessageCircle size={26} /></div><div><h3>A little stuck right now?</h3><p>You don’t have to figure out the first step alone.</p></div><button className="button" onClick={openChat}>I’m Stuck — Help Me Start! <ArrowRight size={16} /></button></Reveal>
+    <section className="dashboard-section"><div className="section-title-row"><div><span className="eyebrow">A LITTLE SOMETHING TO TRY</span><h2>Picked for your next step</h2></div><Link href="/games" className="text-link">All challenges <ArrowRight size={15} /></Link></div><ChallengeCards recommended={a?.game} /></section>
+    <div className="dashboard-bottom-grid"><section className="dashboard-panel"><div className="section-title-row"><h2>My little wins</h2><Star size={20} color="#c39438" /></div>{profile.wins.length ? <ul className="little-wins-list">{[...profile.wins].reverse().slice(0, 5).map(w => <li key={w.id}><span>★</span><div><p translate="no" dir="auto">{w.text}</p><time dateTime={w.createdAt}>{date(w.createdAt)}</time></div></li>)}</ul> : <div className="panel-empty"><span>✧</span><p>Your little wins belong here.<br />Even the ones that feel too small.</p></div>}<Link className="text-link" href="/games/celebrate-wins">Celebrate a little win <ArrowRight size={15} /></Link></section><section className="dashboard-panel"><div className="section-title-row"><h2>Little badges, real bravery</h2><Award size={20} color="#9374ca" /></div><div className="badge-grid">{badges.map(b => <div key={b.id} className={`achievement ${b.unlocked ? "unlocked" : "locked"}`} title={b.description}><span aria-hidden="true">{b.symbol}</span><strong>{b.name}</strong><small>{b.unlocked ? "Collected ✓" : b.description}</small></div>)}</div></section></div>
+    <section className="dashboard-panel activity-panel"><div className="section-title-row"><h2>A trail of tiny steps</h2><Sparkles size={20} /></div>{profile.events.length ? <ul className="activity-list">{[...profile.events].reverse().slice(0, 8).map(e => <li key={e.id}><span className="activity-symbol" style={{ background: exercises.find(g => g.id === e.game)!.color }}>{exercises.find(g => g.id === e.game)!.symbol}</span><div><strong translate="no" dir="auto">{e.title}</strong><p>{exercises.find(g => g.id === e.game)!.name} · <time dateTime={e.createdAt}>{date(e.createdAt)}</time></p></div><span className="activity-xp">+{e.amount} XP</span></li>)}</ul> : <p className="empty-activity">Your journey doesn’t need a perfect beginning. Try a tiny challenge and your first step will appear here.</p>}</section>
+  </section></Localized>;
+}
+function SproutSymbol() { return <span aria-hidden="true">✦</span>; }

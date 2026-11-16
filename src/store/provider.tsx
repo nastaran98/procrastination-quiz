@@ -27,12 +27,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("online", report);
   }, [visitorId]);
   const quiz = profile?.quiz;
+
   useEffect(() => {
     if (!visitorId || !quiz?.finished || !quiz.demographics || !quiz.email) return;
     const report = () => { void fetch("/api/results", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ visitorId, sessionId: quiz.id, email: quiz.email, demographics: quiz.demographics, answers: quiz.answers, followUps: quiz.followUps }) }).catch(() => {}); };
     report(); window.addEventListener("online", report);
     return () => window.removeEventListener("online", report);
   }, [visitorId, quiz]);
+  
   const value = useMemo<AppContext>(() => ({ profile, ready: !!profile, storageError,
     update: fn => setProfile(p => p ? fn(p) : p),
     retake: () => setProfile(p => p ? { ...p, quiz: newQuiz() } : p),

@@ -1,4 +1,12 @@
 {
+  "workbook.download": "Download Workbook",
+  "workbook.downloadFor": "Download Workbook for {name}",
+  "workbook.intro": "Download a workbook for each archetype.",
+  "workbook.step": "Download your workbook",
+  "workbook.body": "Explore your pattern and take a small next step with your matching workbook.",
+  "workbook.title": "Your workbook",
+  "workbook.updatesTitle": "Keep taking small steps",
+  "workbook.updatesBody": "Join my Telegram channel and follow me on Instagram for more workbook updates.",
   "release.solutions": "Solutions will be released in future versions :)",
   "release.title": "More to come",
   "results.socialTitle": "Don’t miss the solutions",

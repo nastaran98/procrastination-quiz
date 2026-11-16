@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { questions } from "../src/data/questions";
 import { clearAnswers, mixedAnswers } from "../tests/fixtures";
 import { mascotAssets } from "../src/data/mascot-assets";
+import { workbookFiles } from "../src/data/workbooks";
 
 async function beginQuiz(page: import("@playwright/test").Page) {
   await page.getByLabel("Age", { exact: true }).fill("28");
@@ -18,6 +19,16 @@ test("all twelve uploaded mascots load in the character explorer", async ({ page
   await expect(page.getByRole("button", { name: "Meet all 12 characters" })).toHaveCount(0);
   await expect(cards.locator(".character-symptoms")).toHaveCount(0);
   await expect(cards.getByText("Click to view symptoms")).toHaveCount(12);
+  const workbooks = page.locator(".character-grid .workbook-download");
+  await expect(workbooks).toHaveCount(12);
+  for (const [index, filename] of Object.values(workbookFiles).entries()) {
+    const href = `/solutions/${encodeURIComponent(filename)}`;
+    await expect(workbooks.nth(index)).toHaveAttribute("href", href);
+    const response = await page.request.get(href);
+    expect(response.ok(), filename).toBe(true);
+    expect(response.headers()["content-type"]).toContain("application/pdf");
+    expect((await response.body()).subarray(0, 5).toString()).toBe("%PDF-");
+  }
   for (const [index, filename] of Object.values(mascotAssets).entries()) {
     const image = cards.nth(index).locator(".mascot img");
     await image.scrollIntoViewIfNeeded();
@@ -57,7 +68,13 @@ test("landing → demographics → ten questions → saved result → refresh �
   await expect(page.getByRole("heading", { name: "Meet The Perfectionist!" })).toBeVisible();
   await expect(page.getByText("100%", { exact: true })).toBeVisible();
   expect((await recording).postDataJSON()).toMatchObject({ email: "quiz@example.com", demographics: { age: 28, sex: "female" }, answers: clearAnswers });
-  await expect(page.getByText("Solutions will be released in future versions :)" )).toBeVisible();
+  const workbook = page.getByRole("link", { name: "Download Workbook for The Perfectionist", exact: true });
+  await expect(workbook).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await workbook.click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("The Perfectionist - Workbook.pdf");
+  expect(await download.failure()).toBeNull();
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("procrastinot:profile:v1")!).quiz);
   expect(saved.demographics).toEqual({ age: 28, sex: "female" });
   expect(saved.email).toBe("quiz@example.com");
@@ -72,7 +89,7 @@ test("landing → demographics → ten questions → saved result → refresh �
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("procrastinot:profile:v1")!).quiz.answers)).toEqual([]);
 });
 
-test("mixed results offer a symptom comparison without solution suggestions", async ({ page }) => {
+test("mixed results offer matching workbooks and a symptom comparison", async ({ page }) => {
   await page.goto("/quiz"); await beginQuiz(page);
   for (let i = 0; i < 10; i++) {
     const q = questions[i], a = mixedAnswers[i];
@@ -81,17 +98,19 @@ test("mixed results offer a symptom comparison without solution suggestions", as
     await page.getByRole("button", { name: i === 9 ? "Meet My Pattern" : "Continue", exact: false }).click();
   }
   await expect(page.getByRole("heading", { name: "Meet your mixed profile." })).toBeVisible();
+  await expect(page.locator(".workbook-download")).toHaveCount(2);
   await page.getByRole("button", { name: "Explore a little more" }).click();
   await page.getByRole("button", { name: "Both feel familiar" }).click();
   await expect(page.getByRole("button", { name: "Explore a little more" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Meet your mixed profile." })).toBeVisible();
 });
 
-test("chatbot and solutions are absent, including old solution URLs", async ({ page }) => {
+test("archetype modal offers a workbook while upcoming features remain unavailable", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Open ProcrastiBuddy" })).toHaveCount(0);
   await page.locator(".character-card").first().click();
   await expect(page.getByRole("dialog")).toContainText("Common symptoms");
+  await expect(page.getByRole("dialog").getByRole("link", { name: "Download Workbook for The Perfectionist" })).toBeVisible();
   await expect(page.getByRole("dialog")).not.toContainText("A little thing to try");
   for (const route of ["/games", "/games/celebrate-wins", "/games/start-before-ready", "/games/good-enough", "/games/realistic-goals", "/dashboard"]) {
     await page.goto(route);

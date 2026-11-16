@@ -36,3 +36,13 @@ model Assessment {
   @@index([createdAt])
   @@index([primary])
 }
+
+model WorkbookDownload {
+  id          String   @id @default(uuid()) @db.Uuid
+  archetypeId String
+  fileName    String
+  createdAt   DateTime @default(now())
+
+  @@index([archetypeId, createdAt])
+  @@index([createdAt])
+}

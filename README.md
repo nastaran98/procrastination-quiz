@@ -2,7 +2,7 @@
 
 **Less overthinking. More doing.** A bilingual Next.js App Router app for playful procrastination self-reflection.
 
-The current release focuses on archetype symptoms and the quiz. Solutions, exercises, the growth dashboard, and the chatbot are hidden from the user experience. Solutions will be released in future versions :)
+The current release focuses on archetype symptoms, the quiz, and downloadable workbooks. Exercises, the growth dashboard, and the chatbot are hidden from the user experience.
 
 ## Run locally
 
@@ -37,6 +37,7 @@ npm run db:migrate
 
 - **Visitor:** one random anonymous browser ID, first visit, latest visit. Repeat visits upsert the same record.
 - **Assessment:** one row per completed quiz session, with age, sex, email, each question's ranked answers (or explicit none/skipped state), follow-ups, all 12 normalized scores, result status, primary/secondary pattern, and scoring version. Retaking creates a new session; refreshes do not create duplicate results. Age, sex, and a valid email are required for new submissions; historical database rows may have null age/sex/email.
+- **WorkbookDownload:** one row per workbook download request, with archetype ID, original PDF filename, and timestamp. No visitor ID, email, or IP address is stored with downloads.
 - Scores are **recomputed on the server**, rather than trusted from the browser. Follow-ups are checked against the actual top-two comparison. Conditional writes prevent older requests from overwriting newer follow-up results.
 - The current quiz's age, sex, email, answers, and computed final result are also saved in browser storage. Older saved quizzes remain readable; an unfinished quiz without an email asks for it before continuing. Existing exercise and conversation data are preserved locally while those features are paused.
 
@@ -51,7 +52,36 @@ curl http://localhost:3000/api/stats \
   -H "Authorization: Bearer YOUR_ANALYTICS_SECRET"
 ```
 
-The response includes `visitors`, `assessments`, `activeLast7Days`, `recentAssessments`, `byArchetype`, and `byStatus`. This endpoint never returns individual answers or visitor IDs. Use Prisma Studio to inspect individual database records.
+The response includes `visitors`, `assessments`, `activeLast7Days`, `recentAssessments`, `byArchetype`, `byStatus`, and `workbookDownloads`. This endpoint never returns individual answers or visitor IDs. Use Prisma Studio to inspect individual database records.
+
+### Workbook download tracking
+
+All **Download Workbook** buttons use `/api/workbooks/{archetypeId}`. The server reads the matching PDF from `public/solutions`, records a `WorkbookDownload` event, and responds with a PDF attachment named after the archetype. Downloads are not cached, so repeat requests reach the server. `HEAD` requests do not increment counts. The filename mapping is in `src/data/workbooks.ts`.
+
+The private `/api/stats` response includes:
+
+```json
+{
+  "workbookDownloads": {
+    "total": 25,
+    "last7Days": 10,
+    "byWorkbook": [
+      {
+        "archetypeId": "perfectionist",
+        "name": "The Perfectionist",
+        "fileName": "The Perfectionist.pdf",
+        "downloads": 8
+      }
+    ]
+  }
+}
+```
+
+`byWorkbook` includes all 12 workbooks, including those with zero downloads. To view production counts, replace the localhost URL in the `curl` command above with your Vercel/custom domain. You can also open the **WorkbookDownload** table in Neon or Prisma Studio; timestamps allow daily/monthly reporting.
+
+Counts represent **download requests**, not unique people or confirmed completed saves. Repeated requests count again. Direct `/solutions/*.pdf` links bypass tracking, and downloads before this feature was deployed cannot be counted retroactively. If the database is absent or unavailable, the PDF still downloads; that request is not recorded or retried. The `X-Workbook-Tracking` response header reports `recorded`, `disabled`, or `unavailable`, and database failures are logged server-side.
+
+For deployment, include migration `20261116000000_workbook_downloads`, configure the database and `ANALYTICS_SECRET`, and run `npm run db:migrate` against the target database before serving traffic. The recommended Vercel build command below already applies migrations. PDF files are explicitly included in the download function's file tracing for deployment.
 
 If both `DATABASE_URL` and `DIRECT_URL` are empty, recording endpoints return `{ "enabled": false }`. Browser progress remains functional. Failed database writes do not block the quiz; recording is retried on refresh and when the browser reconnects. A retake replaces the browser's current quiz, so this is best-effort analytics rather than a durable offline upload queue.
 
@@ -102,9 +132,11 @@ To add or revise copy, keep message IDs synchronized in both JSON catalogs. `use
 
 | Route | Experience |
 | --- | --- |
-| `/` | Illustrated landing, how it works, all 12 archetypes shown immediately, click-to-view symptoms, single-column cards on mobile, future-solutions notice |
+| `/` | Illustrated landing, how it works, all 12 archetypes shown immediately, click-to-view symptoms, workbook downloads, single-column cards on mobile |
 | `/quiz` | Required age (integer 1–120), sex, and email, 10 questions, ranked selection of up to two answers, exclusive None, skip/back, stable shuffled options, refresh recovery |
-| `/results` | Saved final result, pattern fit and symptoms, clear/mixed/tentative/insufficient states, one optional blocker comparison, sharing |
+| `/results` | Saved final result, pattern fit and symptoms, matching workbook downloads, clear/mixed/tentative/insufficient states, one optional blocker comparison, sharing |
+| `/api/workbooks/[archetype]` | Tracked PDF download; `HEAD` serves metadata without counting |
+| `/api/stats` | Private usage totals and per-workbook download counts; requires `ANALYTICS_SECRET` bearer token |
 | `/games`, `/games/[game]`, `/dashboard` | Coming-soon notice for future solutions |
 
 The first answer selected is **purple / Very similar** (2 points); the optional second is **teal / Similar** (1 point). Both have numbered text labels and a visible legend. Tapping a selected answer removes it; the remaining answer becomes first choice. Remove a choice before adding another once two are selected.

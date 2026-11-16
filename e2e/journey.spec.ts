@@ -21,12 +21,15 @@ test("all twelve uploaded mascots load in the character explorer", async ({ page
   await expect(cards.getByText("Click to view symptoms")).toHaveCount(12);
   const workbooks = page.locator(".character-grid .workbook-download");
   await expect(workbooks).toHaveCount(12);
-  for (const [index, filename] of Object.values(workbookFiles).entries()) {
-    const href = `/solutions/${encodeURIComponent(filename)}`;
+  for (const [index, [id, filename]] of Object.entries(workbookFiles).entries()) {
+    const href = `/api/workbooks/${id}`;
     await expect(workbooks.nth(index)).toHaveAttribute("href", href);
     const response = await page.request.get(href);
     expect(response.ok(), filename).toBe(true);
     expect(response.headers()["content-type"]).toContain("application/pdf");
+    expect(response.headers()["content-disposition"]).toContain("attachment;");
+    expect(response.headers()["cache-control"]).toContain("no-store");
+    expect(response.headers()["x-workbook-tracking"]).toBe("disabled");
     expect((await response.body()).subarray(0, 5).toString()).toBe("%PDF-");
   }
   for (const [index, filename] of Object.values(mascotAssets).entries()) {

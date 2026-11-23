@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اتاق اول قلعه</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE grown-up escape-room prototype: calm, a little wry, never childish
+   IDEA a museum diorama: one lit room sitting on a dark plinth, read like an escape-room floor plan
+   PICTURE the live 3D room with the sad marshmallow and the puzzle props
+   COLOUR housing stone #f4f2ef / night #141518, ink #16171a, amber #e8a33d, teal #3fa796 for success
+   TYPE Vazirmatn 800 display + Vazirmatn text
+   LAYOUT title and variant tabs on one row, stage full width 16:9 (3:4 on phones), help line under */
+:root{color-scheme:light dark;--bg:light-dark(#f4f2ef,#141518);--ink:light-dark(#16171a,#f1eee9);--soft:light-dark(#5d6069,#a9adb6);--line:light-dark(#d9d4cc,#33363d);--amber:#e8a33d;--teal:#3fa796}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Vazirmatn,Tahoma,sans-serif;overflow-x:clip}
+.wrap{max-width:1200px;margin:0 auto;padding:16px max(16px,3vw) 22px;display:flex;flex-direction:column;gap:12px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px 24px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(24px,3.4vw,34px);line-height:1.15;font-weight:800}
+header p{margin:2px 0 0;color:var(--soft);font-size:15px}
+.menu{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:600 15px Vazirmatn,sans-serif;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.menu:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+header p{margin:0}
+h1{direction:ltr;text-align:right}
+.lvls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:6px 0 14px}
+.lv{min-height:64px;border-radius:12px;border:1px solid #b9b4ad;background:#fff;color:#16171a;font:800 15px Vazirmatn,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px}
+.lv small{font:500 12px Vazirmatn,sans-serif;color:#5d6069}.lv.cur{border:2px solid #16171a}.lv.done{background:#eaf3ee;border-color:#3fa796}.lv[data-soon]{opacity:.5}
+.lv:focus-visible,.bs:focus-visible,.bi:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.meta span{border-radius:999px;padding:2px 10px;font-size:14px;background:#16171a;color:#f4f2ef}.meta span.q{background:#e6e2dc;color:#8a8d96}
+.bslots{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;direction:ltr;margin:6px 0 4px}
+.bs{min-height:84px;border-radius:10px;border:2px dashed #b9b4ad;background:#fff;color:#16171a;font:500 11px/1.35 Vazirmatn,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:3px;direction:rtl}
+.bs.on{border-style:solid;border-color:#16171a;background:#f6efe0}.bs b{font-size:11px}.bs .big{font:800 30px Georgia,serif}
+.blab{display:flex;justify-content:space-between;font-size:12px;color:#5d6069;direction:ltr;margin-bottom:12px}
+.binv{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.bi{min-height:44px;border-radius:10px;border:1px solid #b9b4ad;background:#fff;color:#16171a;font:500 13px Vazirmatn,sans-serif;cursor:pointer;padding:4px 10px;display:flex;flex-direction:column;align-items:flex-start}
+.bi span{font-size:12px;color:#7a2e2a}.bi.sel{border:2px solid #e8a33d;background:#fff6e3}
+#ovBoard .card{width:min(620px,100%)}
+.cin{display:flex;gap:6px;direction:ltr;justify-content:center;margin:4px 0 12px}.cin input{width:44px;height:56px;border-radius:10px;border:2px solid #b9b4ad;text-align:center;font:800 24px Georgia,serif;text-transform:uppercase;background:#fff;color:#16171a}
+.cin input:focus-visible{outline:3px solid var(--amber)}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-height:calc(100svh - 160px);min-height:360px;border-radius:18px;overflow:hidden;background:#1f2228;touch-action:none;user-select:none;-webkit-user-select:none}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.card{background:#f4f2ef;color:#16171a;border-radius:16px}
+.obj{position:absolute;top:14px;right:14px;max-width:min(360px,calc(100% - 150px));padding:10px 14px;background:rgba(22,23,26,.86);color:#f1eee9;border-radius:14px;display:flex;flex-direction:column;pointer-events:none}
+.obj span{font-size:12px;color:#b9bcc4}.obj b{font-size:18px;line-height:1.3}.obj small{font-size:14px;color:#d7d9de;line-height:1.5}
+.tools{position:absolute;top:14px;left:14px;display:flex;gap:8px}
+.tb{min-height:44px;padding:0 14px;border-radius:12px;border:1px solid #3a3d45;background:rgba(22,23,26,.86);color:#f1eee9;font:600 14px Vazirmatn,sans-serif;cursor:pointer}
+.tb:focus-visible,.tabs button:focus-visible,.btn:focus-visible,.dig:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.prompt{position:absolute;transform:translate(-50%,-100%);background:#f4f2ef;color:#16171a;border-radius:10px;padding:4px 10px;font-size:14px;font-weight:600;white-space:nowrap;pointer-events:none;display:none}
+.prompt kbd{font:600 12px Vazirmatn,sans-serif;border:1px solid #16171a;border-radius:6px;padding:0 5px;margin-inline-start:6px}
+.info{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-width:min(560px,calc(100% - 32px));padding:10px 16px;font-size:16px;line-height:1.5;display:none;pointer-events:none}
+.toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:min(460px,calc(100% - 32px));padding:14px 18px;font-size:16px;line-height:1.55;text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+.ov{position:absolute;inset:0;display:none;place-items:center;padding:16px;background:rgba(14,15,18,.55)}
+.ov.show{display:grid}
+.ov .card{width:min(480px,100%);padding:20px 22px;max-height:100%;overflow:auto}
+.ov h2{margin:0 0 8px;font-size:22px;line-height:1.3;font-weight:800}
+.ov p{margin:0 0 12px}
+.ov ul{margin:0 0 14px;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.ov li{display:flex;gap:10px;align-items:baseline}.ov li b{flex:none;min-width:28px;height:28px;border-radius:8px;background:#f3d98f;display:grid;place-items:center}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{min-height:44px;padding:0 18px;border-radius:12px;border:0;background:#16171a;color:#f4f2ef;font:600 15px Vazirmatn,sans-serif;cursor:pointer}
+.btn.alt{background:transparent;color:#16171a;border:1px solid #b9b4ad}
+.small{font-size:13px;color:#5d6069}
+.digs{display:flex;gap:10px;direction:ltr;margin:4px 0 14px}
+.dig{width:56px;height:64px;border-radius:12px;border:2px solid #b9b4ad;text-align:center;font:800 28px Vazirmatn,sans-serif;background:#fff;color:#16171a}
+.shake{animation:sh .35s}@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.opts{display:flex;flex-direction:column;gap:8px;margin:4px 0 10px}
+.opt{min-height:48px;padding:10px 14px;border-radius:12px;border:1px solid #b9b4ad;background:#fff;color:#16171a;font:500 15px/1.6 Vazirmatn,sans-serif;text-align:start;cursor:pointer}
+.opt:hover{border-color:#16171a}.opt:disabled{opacity:.45;cursor:default}.opt:focus-visible,.lt:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.slots{display:flex;gap:12px;direction:rtl;justify-content:center;flex-wrap:wrap;margin:6px 0 14px}.slots .w{display:flex;gap:3px}
+.slots span{width:34px;height:44px;border-radius:10px;border:2px solid #b9b4ad;background:#fff;display:grid;place-items:center;font:800 24px Vazirmatn,sans-serif}
+.bank{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.lt{min-height:46px;border-radius:10px;border:0;background:#16171a;color:#f4f2ef;font:800 22px Vazirmatn,sans-serif;cursor:pointer}.lt:disabled{background:#d9d4cc;color:#8a8d96;cursor:default}
+.sbarw{height:12px;border-radius:999px;background:#e6e2dc;overflow:hidden;margin:4px 0 4px}#sBar{height:100%;width:0;transition:width .3s}
+.items{display:flex;flex-direction:column;gap:6px;margin:8px 0}.it{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid #dcd8d2;border-radius:12px;padding:6px 10px;background:#fff}
+.it div{display:flex;flex-direction:column}.it b{font-size:14px;font-weight:600}.it.out{background:#f1efe9;border-style:dashed}.it .btn{min-height:38px;padding:0 12px;font-size:13px;flex:none}.tg{color:#7a2e2a}
+#ovSuit .card{width:min(560px,100%)}
+.pslots{display:flex;gap:8px;justify-content:center;margin:8px 0 12px}.pslots span{min-width:86px;height:46px;border-radius:10px;border:2px solid #b9b4ad;background:#fff;display:grid;place-items:center;font:800 18px Vazirmatn,sans-serif;padding:0 8px}
+.pbank{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}.pw{min-height:44px;padding:0 16px;border-radius:10px;border:0;background:#16171a;color:#f4f2ef;font:800 17px Vazirmatn,sans-serif;cursor:pointer}.pw:disabled{background:#d9d4cc;color:#8a8d96}
+#ovEye{background:none;padding:0;place-items:end center}.eyes{position:absolute;inset:0;width:100%;height:100%}
+.eyecap{position:relative;margin:0 0 18px;padding:12px 16px;display:flex;gap:14px;align-items:center;max-width:calc(100% - 32px)}.eyecap p{margin:0}
+.lbank{grid-template-columns:repeat(6,minmax(0,1fr))}
+.mslots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:6px 0 12px}.mslots span{min-height:42px;border-radius:10px;border:2px solid #b9b4ad;background:#fff;display:grid;place-items:center;font:800 15px Vazirmatn,sans-serif;padding:2px}
+#ovMeta .card{width:min(620px,100%)}#ovEnd .card{width:min(600px,100%)}
+.chips2{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.chips2 span{font-size:13px;border:1px solid #c9c5bf;border-radius:999px;padding:2px 10px}
+.cta{background:#16171a;color:#f4f2ef;border-radius:14px;padding:14px 16px;margin-bottom:12px}.cta p{color:#d7d9de;font-size:15px;margin:6px 0 12px}.btn.gold{background:#e8a33d;color:#16171a;text-decoration:none;display:inline-flex;align-items:center}
+.mob{position:absolute;bottom:14px;left:14px;right:14px;display:none;justify-content:space-between;align-items:flex-end;pointer-events:none}
+.mob>div{display:flex;gap:8px;pointer-events:auto}
+.mb{width:52px;height:52px;border-radius:50%;border:1px solid #3a3d45;background:rgba(22,23,26,.86);color:#f1eee9;display:grid;place-items:center}
+.mb.act{width:76px;height:76px;background:var(--amber);color:#16171a;border:0;font:800 15px Vazirmatn,sans-serif;pointer-events:auto}
+.help{margin:0;color:var(--soft);font-size:14px}
+#ovLoad{background:#1f2228;color:#d7d9de}
+@media (hover:none){.mob{display:flex}.info{bottom:100px}}
+@media(max-width:600px){.stage{aspect-ratio:3/4;max-height:none}.obj{max-width:calc(100% - 28px);top:66px}.bs{min-height:70px}.bs b{font-size:10px}.lvls{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}.shake{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div><p>قلعه‌ی فردا</p><h1 id="roomH">Level 1</h1></div>
+<button class="menu" id="menuBtn" aria-haspopup="dialog"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>منو</button>
+</header>
+<div class="stage" id="stage">
+<canvas id="cv"></canvas>
+<div class="obj" id="obj"><span id="objK"></span><b id="objT"></b><small id="objS"></small></div>
+<div class="tools"><button class="tb" id="hintBtn">راهنما</button><button class="tb" id="resetBtn">از اول</button><button class="tb" id="freeBtn" hidden>دوربینِ آزاد</button></div>
+<div class="prompt" id="prompt"></div>
+<div class="info card" id="info"></div>
+<div class="toast card" id="toast"></div>
+<div class="mob"><div><button class="mb" id="rotU" aria-label="دوربین بالاتر"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 15l6-6 6 6"/></svg></button><button class="mb" id="rotD" aria-label="دوربین پایین‌تر"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button><button class="mb" id="rotL" aria-label="چرخوندنِ دوربین به چپ"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg></button><button class="mb" id="rotR" aria-label="چرخوندنِ دوربین به راست"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/></svg></button></div><button class="mb act" id="actBtn">انجام بده</button></div>
+<div class="ov" id="ovHint"><div class="card"><h2>راهنما</h2><p id="hintTxt"></p><div class="row"><button class="btn" id="hintMore">راهنمای بیشتر</button><button class="btn alt" data-close>باشه</button></div></div></div>
+<div class="ov" id="ovNote"><div class="card"><h2 id="noteH"></h2><div id="noteB"></div><button class="btn" data-close>فهمیدم</button></div></div>
+<div class="ov" id="ovLock"><div class="card"><h2>کشوی قفل‌دار</h2><p>یه قفلِ سه‌رقمی داره.</p><div class="digs" id="digs"><input class="dig" id="d0" inputmode="numeric" maxlength="1" aria-label="رقم اول"><input class="dig" id="d1" inputmode="numeric" maxlength="1" aria-label="رقم دوم"><input class="dig" id="d2" inputmode="numeric" maxlength="1" aria-label="رقم سوم"></div><p class="small" id="lockMsg">رمز رو بزن.</p><div class="row"><button class="btn" id="lockGo">امتحانش کن</button><button class="btn alt" data-close>بی‌خیال</button></div></div></div>
+<div class="ov" id="ovPick"><div class="card"><span class="small">آینه می‌گه:</span><h2 id="pickQ"></h2><p class="small">چی جوابش رو می‌دی؟</p><div class="opts" id="pickA"></div><p class="small" id="pickMsg" aria-live="polite"></p><button class="btn alt" data-close>بعداً</button></div></div>
+<div class="ov" id="ovWord"><div class="card"><h2>قفلِ در</h2><p class="small">حرف‌هایی که از آینه‌ها جمع کردی رو به ترتیب بچین.</p><div class="slots" id="wSlots"></div><div class="bank" id="wBank"></div><p class="small" id="wMsg" aria-live="polite"></p><div class="row"><button class="btn" id="wGo">امتحانش کن</button><button class="btn alt" id="wDel">یه حرف پاک کن</button><button class="btn alt" data-close>بی‌خیال</button></div></div></div>
+<div class="ov" id="ovMenu"><div class="card" role="dialog" aria-label="منو"><h2>منو</h2><p class="small">یه level رو انتخاب کن.</p><div class="lvls" id="lvls"></div><h2 style="font-size:17px">رمزِ کلی</h2><p class="small">هر level یه کلمه بهت می‌ده. آخرِ بازی باید ده تا کلمه رو به ترتیب بچینی.</p><div class="meta" id="meta"></div><button class="btn alt" data-close>بستن</button></div></div>
+<div class="ov" id="ovBoard"><div class="card"><h2>پرونده‌ی شواهد</h2><p class="small">یه مدرک رو انتخاب کن، بعد روی یه خونه‌ی تخته بزن. روی کارتِ چسبونده بزنی، برمی‌گرده.</p><div class="bslots" id="bSlots"></div><div class="blab"><span>قدیمی‌تر</span><span>جدیدتر</span></div><div class="binv" id="bInv"></div><p class="small" id="bMsg" aria-live="polite"></p><div class="row"><button class="btn" id="bFlip">ترتیب درسته؟ برشون گردون</button><button class="btn alt" data-close>بستن</button></div></div></div>
+<div class="ov" id="ovCode"><div class="card"><h2>قفلِ در</h2><p class="small">یه کلمه‌ی هفت‌حرفی.</p><div class="cin" id="cIn"><input id="c0" maxlength="1" aria-label="حرف ۱"><input id="c1" maxlength="1" aria-label="حرف ۲"><input id="c2" maxlength="1" aria-label="حرف ۳"><input id="c3" maxlength="1" aria-label="حرف ۴"><input id="c4" maxlength="1" aria-label="حرف ۵"><input id="c5" maxlength="1" aria-label="حرف ۶"><input id="c6" maxlength="1" aria-label="حرف ۷"></div><p class="small" id="cMsg" aria-live="polite"></p><div class="row"><button class="btn" id="cGo">امتحانش کن</button><button class="btn alt" data-close>بی‌خیال</button></div></div></div>
+<div class="ov" id="ovSuit"><div class="card"><h2>چمدون</h2><div class="sbarw" id="sBarW"><div id="sBar"></div></div><p class="small" id="sPct"></p><div id="sItems" class="items"></div><p class="small" id="sMsg" aria-live="polite"></p><p class="small" id="sTime" style="color:#b5383a"></p><div class="row"><button class="btn" id="sClose">درِ چمدون رو ببند</button><button class="btn alt" id="sFold">دقیق‌تر تا کن</button><button class="btn alt" data-close>بستن</button></div></div></div>
+<div class="ov" id="ovPass"><div class="card"><h2>مأمورِ قطار</h2><p>«رمزِ سوار شدن؟ سه تا کلمه‌ست.»</p><div class="pslots" id="pSlots"></div><div class="pbank" id="pBank"></div><p class="small" id="pMsg" aria-live="polite"></p><div class="row"><button class="btn" id="pGo">بگو</button><button class="btn alt" id="pDel">یه کلمه پاک کن</button><button class="btn alt" data-close>بی‌خیال</button></div></div></div>
+<div class="ov" id="ovIntro"><div class="card"><span class="small">قلعه‌ی فردا</span><h2 id="inH" style="direction:ltr;text-align:right"></h2><p id="inP"></p><div class="row"><button class="btn" id="inGo">بریم</button><button class="btn alt" id="inMenu">منو</button></div></div></div>
+<div class="ov" id="ovEye"><svg class="eyes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path fill="rgba(8,8,10,.9)" fill-rule="evenodd" d="M0 0H100V100H0Z M50 29C40 20 13 22 10 39C7 56 23 69 38 65C44 63 46 61 50 61C54 61 56 63 62 65C77 69 93 56 90 39C87 22 60 20 50 29Z"/></svg><div class="card eyecap"><p id="eyeCap"></p><button class="btn" data-close>برگرد</button></div></div>
+<div class="ov" id="ovLet"><div class="card"><h2>قفلِ در</h2><p class="small">«پشتِ هر بهانه یه ▢▢▢▢ هست.»</p><div class="slots" id="lSlots"></div><div class="bank lbank" id="lBank"></div><p class="small" id="lMsg" aria-live="polite"></p><div class="row"><button class="btn" id="lGo">امتحانش کن</button><button class="btn alt" id="lDel">یه حرف پاک کن</button><button class="btn alt" data-close>بی‌خیال</button></div></div></div>
+<div class="ov" id="ovChip"><div class="card"><h2 id="chH"></h2><p id="chP"></p><div class="pslots" id="chS"></div><div class="pbank" id="chB"></div><p class="small" id="chM" aria-live="polite"></p><div class="row"><button class="btn" id="chGo">امتحانش کن</button><button class="btn alt" id="chDel">یه کلمه پاک کن</button><button class="btn alt" data-close>بی‌خیال</button></div></div></div>
+<div class="ov" id="ovCal"><div class="card"><h2>چرخِ تقویم</h2><p class="small">بچرخونش و عقربه‌ی انگیزه‌سنج رو نگاه کن. وقتی ببندیش، تقویم برمی‌گرده به امروز.</p><label for="calR" id="calD" style="font-weight:800;font-size:20px;display:block;margin:6px 0"></label><input type="range" id="calR" min="1" max="30" step="1" value="30" dir="ltr" style="width:100%;height:44px;accent-color:#e8a33d"><p id="calF" style="margin:8px 0 4px;font-weight:600"></p><p class="small" id="calV" aria-live="polite"></p><button class="btn" data-close>برگرد به امروز</button></div></div>
+<div class="ov" id="ovFeel"><div class="card"><span class="small">R · Recognize · ببین</span><h2>این حس اسمش چیه؟</h2><p class="small">هر چی دقیق‌تر، بهتر.</p><div class="opts" id="feelB"></div><p class="small" id="feelM" aria-live="polite"></p><button class="btn alt" data-close>بعداً</button></div></div>
+<div class="ov" id="ovMeta"><div class="card"><h2>درِ قلعه</h2><p class="small">ده جای خالی. هر level یه کلمه بهت داده بود.</p><div class="mslots" id="mS"></div><div class="pbank" id="mB"></div><p class="small" id="mM" aria-live="polite"></p><div class="row"><button class="btn" id="mGo">امتحانش کن</button><button class="btn alt" id="mDel">یه کلمه پاک کن</button><button class="btn alt" data-close>بی‌خیال</button></div></div></div>
+<div class="ov" id="ovEnd"><div class="card endc"><span class="small">قلعه‌ی فردا · پایان</span><h2>از قلعه بیرون اومدی. امروزه.</h2><p>«اهمال‌کاری یه مشکلِ مدیریتِ زمان نیست، یه مشکلِ مدیریتِ احساسه.» هر کاری که گفته بودی «فردا انجامش می‌دم»، حالا یه قدم نزدیک‌تره.</p><p class="small">کلیدهایی که با خودت میاری:</p><div class="chips2"><span>تستِ سه‌سؤالی</span><span>تستِ دوستِ صمیمی</span><span>کوچک‌ترین قدم</span><span>قانونِ ۸۰٪</span><span>بهانه‌یاب</span><span>قانونِ اسکینر</span><span>چهار پیچِ انگیزه</span><span>RAIN</span></div><div class="cta"><b>کدوم مارشمالو تویی؟</b><p>اهمال‌کاری ۱۲ تا چهره داره: از کمال‌گرا و نگران تا سرکش و رویاپرداز. کوییزِ ۱۰ سؤالی، حدودِ ۳ دقیقه و رایگان، بهت می‌گه کدومش تویی. برای هر شخصیت هم یه ورک‌بوک هست که قدمِ بعدیِ خودت رو نشونت می‌ده.</p><a class="btn gold" href="https://procrastination-quiz-1ey4.vercel.app/" target="_top">کوییز رو شروع کن</a></div><p class="small" id="endS"></p><div class="row"><button class="btn alt" id="endMenu">منو</button><button class="btn alt" id="endAgain">از اول</button></div></div></div>
+<div class="ov" id="ovWin"><div class="card"><h2 id="winH"></h2><p id="winP"></p><p id="winW"></p><p class="small" id="winS"></p><div class="row"><button class="btn" id="winNext">Level بعدی</button><button class="btn alt" id="winAgain">دوباره</button><button class="btn alt" id="winMenu">منو</button></div></div></div>
+<div class="ov show" id="ovLoad"><p>دارم اتاق رو می‌چینم…</p></div>
+</div>
+<p class="help">راه رفتن: WASD یا جهت‌ها، یا روی زمین کلیک کن · کار با اشیا: Space یا کلیک روی خودش · چرخوندنِ دوربین: صفحه رو بکش (چپ‌وراست و بالاوپایین) یا Q/E و R/F · زوم: اسکرولِ موس · نزدیکِ هر بخش که بری، دوربین خودش روش زوم می‌کنه</p>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+{
+const $=id=>document.getElementById(id);
+const fd=n=>String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const en=s=>String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+function main(){
+if(!window.THREE){$('ovLoad').innerHTML='<p>موتورِ سه‌بعدی بارگذاری نشد. صفحه رو دوباره باز کن.</p>';return}
+const stage=$('stage'),cv=$('cv');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+R.setPixelRatio(Math.min(window.devicePixelRatio||1,2));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.outputEncoding=THREE.sRGBEncoding;
+const scene=new THREE.Scene();scene.background=new THREE.Color('#1f2228');scene.fog=new THREE.Fog('#1f2228',22,40);
+const cam=new THREE.PerspectiveCamera(36,1,.1,100);
+scene.add(new THREE.HemisphereLight('#fff3e2','#3a3c46',.72));
+const sun=new THREE.DirectionalLight('#ffd9ad',1.05);sun.position.set(-6,12,5);sun.castShadow=true;sun.shadow.mapSize.set(1536,1536);
+Object.assign(sun.shadow.camera,{left:-8,right:8,top:8,bottom:-8,near:1,far:32});sun.shadow.bias=-.0004;sun.shadow.normalBias=.02;scene.add(sun);
+const fill=new THREE.DirectionalLight('#9fb4d8',.28);fill.position.set(7,5,-5);scene.add(fill);
+const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.88,metalness:0},o));
+function mesh(g,m,x=0,y=0,z=0,cast=true,rec=true){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=cast;o.receiveShadow=rec;return o}
+function tex(draw,w=256,h=256){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');draw(x,w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t}
+function txt(x,s,px,y,w,col,wt=800){x.fillStyle=col;x.font=wt+' '+px+'px Vazirmatn, Tahoma, sans-serif';x.textAlign='center';x.textBaseline='middle';x.direction='rtl';x.fillText(s,w/2,y)}
+function wrap(x,s,px,y0,w,col,lh){x.fillStyle=col;x.font='600 '+px+'px Vazirmatn, Tahoma, sans-serif';x.textAlign='center';x.textBaseline='middle';x.direction='rtl';let line='',y=y0;for(const wd of s.split(' ')){const t=line?line+' '+wd:wd;if(x.measureText(t).width>w-30&&line){x.fillText(line,w/2,y);line=wd;y+=lh}else line=t}if(line)x.fillText(line,w/2,y)}
+function wood(x,w,h){x.fillStyle='#b8946a';x.fillRect(0,0,w,h);x.fillStyle='rgba(70,45,20,.18)';for(let i=1;i<4;i++)x.fillRect(0,i*h/4-2,w,4);x.strokeStyle='#6e5134';x.lineWidth=14;x.strokeRect(7,7,w-14,h-14)}
+let audio=null;function beep(fr){try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();fr.forEach((f,i)=>{const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0,audio.currentTime+i*.12);g.gain.linearRampToValueAtTime(.12,audio.currentTime+i*.12+.02);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+i*.12+.5);o.connect(g).connect(audio.destination);o.start(audio.currentTime+i*.12);o.stop(audio.currentTime+i*.12+.55)})}catch(e){}}
+
+/* room */
+const ft=tex((x,w,h)=>{x.fillStyle='#c4b8a6';x.fillRect(0,0,w,h);x.strokeStyle='rgba(60,45,30,.2)';x.lineWidth=4;x.strokeRect(0,0,w,h)},128,128);ft.wrapS=ft.wrapT=THREE.RepeatWrapping;ft.repeat.set(10,8);
+const floor=mesh(new THREE.PlaneGeometry(10,8),M('#ffffff',{map:ft}),0,0,0,false,true);floor.rotation.x=-Math.PI/2;scene.add(floor);
+scene.add(mesh(new THREE.BoxGeometry(10.9,.6,8.9),M('#2a2d34'),0,-.32,0,false,false));
+const wallM=M('#e3dacd'),trimM=M('#d2c6b4');
+const northG=new THREE.Group();scene.add(northG);
+[[0,4.15,10.6,.3],[5.15,0,.3,8],[-5.15,0,.3,8],[-3.0,-4.15,4.6,.3],[3.0,-4.15,4.6,.3]].forEach((w,i)=>(i>2?northG:scene).add(mesh(new THREE.BoxGeometry(w[2],.9,w[3]),wallM,w[0],.45,w[1])));
+northG.add(mesh(new THREE.BoxGeometry(.32,2.5,.42),trimM,-.86,1.25,-4.15),mesh(new THREE.BoxGeometry(.32,2.5,.42),trimM,.86,1.25,-4.15),mesh(new THREE.BoxGeometry(2.04,.34,.42),trimM,0,2.5,-4.15));
+const hinge=new THREE.Group();hinge.position.set(-.7,0,-4.15);northG.add(hinge);
+const doorM=M('#6b5a48');hinge.add(mesh(new THREE.BoxGeometry(1.4,2.3,.12),doorM,.7,1.15,0));hinge.add(mesh(new THREE.SphereGeometry(.05,12,8),M('#b08a4a',{metalness:.5,roughness:.4}),1.25,1.1,.09));
+const glow=new THREE.Mesh(new THREE.PlaneGeometry(1.4,2.3),new THREE.MeshBasicMaterial({color:'#ffc77a'}));glow.position.set(0,1.15,-4.4);northG.add(glow);
+const doorLight=new THREE.PointLight('#ffc77a',0,6);doorLight.position.set(0,1.4,-3.6);northG.add(doorLight);
+
+/* character: body + leaf hair, sad face */
+function makeMarshi(){const g=new THREE.Group(),body=new THREE.Group();g.add(body);
+ const pts=[[0,0],[.26,.01],[.37,.08],[.42,.25],[.42,.45],[.39,.66],[.33,.84],[.24,.97],[.12,1.04],[0,1.06]].map(p=>new THREE.Vector2(p[0],p[1]));
+ body.add(mesh(new THREE.LatheGeometry(pts,48),M('#f3eee6',{roughness:.78}),0,.07,0));
+ const leafM=M('#4aa96c',{roughness:.55}),sg=new THREE.SphereGeometry(1,28,18);
+ const l1=mesh(sg,leafM,-.1,1.24,0);l1.scale.set(.12,.19,.085);l1.rotation.z=.55;
+ const l2=mesh(sg,leafM,.1,1.24,0);l2.scale.set(.12,.19,.085);l2.rotation.z=-.55;
+ body.add(l1,l2,mesh(new THREE.CylinderGeometry(.035,.05,.12,10),leafM,0,1.12,0));
+ const eyeM=M('#1b1b20',{roughness:.2}),hiM=new THREE.MeshBasicMaterial({color:'#ffffff'});
+ [-1,1].forEach(s=>{const e=mesh(new THREE.SphereGeometry(.066,20,14),eyeM,s*.12,.79,.345,false,false);e.scale.z=.6;body.add(e);body.add(mesh(new THREE.SphereGeometry(.018,8,6),hiM,s*.12+.022,.815,.385,false,false))});
+ const browM=M('#2a2428',{roughness:.6}),brows=[-1,1].map(s=>{const b=mesh(new THREE.BoxGeometry(.11,.022,.02),browM,s*.13,.91,.315,false,false);body.add(b);return b});
+ const mouth=mesh(new THREE.TorusGeometry(.042,.011,8,20,Math.PI),browM,0,.665,.372,false,false);body.add(mouth);
+ [-1,1].forEach(s=>{const a=mesh(sg,M('#f3eee6',{roughness:.78}),s*.42,.43,.05);a.scale.set(.075,.14,.08);a.rotation.z=s*.35;body.add(a)});
+ const feet=[-1,1].map(s=>{const f=mesh(sg,M('#ebe4d8'),s*.15,.05,.03);f.scale.set(.12,.06,.15);g.add(f);return f});
+ return{g,body,brows,mouth,feet}}
+const H=makeMarshi();H.g.scale.setScalar(1.15);scene.add(H.g);
+const HM=new Set();H.g.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.transparent=true;HM.add(o.material)}});let fade=1;
+function mood(happy){H.brows[0].rotation.z=happy?-.1:.38;H.brows[1].rotation.z=happy?.1:-.38;H.brows.forEach(b=>b.position.y=happy?.93:.91);H.mouth.rotation.z=happy?Math.PI:0;H.mouth.position.y=happy?.69:.665;H.happy=happy}
+mood(false);
+
+/* state */
+const PR=.34,K={};
+let uAz=.55,uEl=.95,uZ=1,base=13,focus=null,focusBlock=null,fOff={az:0,el:0,d:0};const C={x:0,y:.4,z:1,az:.55,el:.95,d:13};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function rot(dx,dy){const f=focus&&focus.focus&&focus.focus();if(f&&f.az!=null){fOff.az=clamp(fOff.az+dx,-.8,.8);fOff.el=clamp(fOff.el+dy,-.4,.9)}else if(f){uAz+=dx;fOff.el=clamp(fOff.el+dy,-.4,.9)}else{uAz+=dx;uEl=clamp(uEl+dy,.28,1.42)}}
+function freeCam(){if(focus){focusBlock=focus;focus=null}}
+const P={x:0,z:2.8,ry:0,idle:0,move:false,t:0,walkTo:null,pend:null,carry:null};
+let mode=0,L=null,door=0,doorTarget=0,won=false,hintLv=0,hintsUsed=0,t0=0,clock=0;
+const ovs=['ovFeel','ovMeta','ovEnd','ovChip','ovCal','ovEye','ovLet','ovHint','ovNote','ovLock','ovPick','ovWord','ovMenu','ovBoard','ovCode','ovSuit','ovPass','ovIntro','ovWin','ovLoad'];
+const busy=()=>ovs.some(o=>$(o).classList.contains('show'));
+function show(id){ovs.forEach(o=>$(o).classList.toggle('show',o===id));if(id){const f=$(id).querySelector('input,button');if(f)setTimeout(()=>f.focus(),30)}}
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>show(null));
+let toastTO=0;function toast(s,ms=2600){const t=$('toast');t.textContent=s;t.classList.add('show');clearTimeout(toastTO);toastTO=setTimeout(()=>t.classList.remove('show'),ms)}
+function note(h,html){$('noteH').textContent=h;$('noteB').innerHTML=html;show('ovNote')}
+function openDoor(msg){if(doorTarget)return;doorTarget=1;mood(true);beep([523,659,784]);toast(msg,3200)}
+
+/* level A: balance lock */
+function buildA(){const g=new THREE.Group(),S={x:-2.6,z:-2.45},stand=new THREE.Group();stand.position.set(S.x,0,S.z);g.add(stand);
+ const metal=M('#5b5550',{roughness:.5,metalness:.3}),brass=M('#b08a4a',{roughness:.42,metalness:.5});
+ stand.add(mesh(new THREE.BoxGeometry(1.1,.14,.6),metal,0,.07,0),mesh(new THREE.CylinderGeometry(.06,.08,1.6,12),metal,0,.87,0));
+ const beam=new THREE.Group();beam.position.y=1.68;stand.add(beam);beam.add(mesh(new THREE.BoxGeometry(2.7,.08,.1),brass),mesh(new THREE.SphereGeometry(.09,16,12),brass));
+ const mkPan=()=>{const p=new THREE.Group();p.add(mesh(new THREE.CylinderGeometry(.5,.46,.06,28),brass));const cg=new THREE.CylinderGeometry(.008,.008,1.0,4);[[1,0],[-1,0],[0,1],[0,-1]].forEach(o=>{const s=mesh(cg,metal,o[0]*.22,.5,o[1]*.22,false,false);s.rotation.set(o[1]*.43,0,-o[0]*.43);p.add(s)});stand.add(p);return p};
+ const panL=mkPan(),panR=mkPan();panL.add(mesh(new THREE.CylinderGeometry(.24,.3,.42,20),M('#2b2c30',{roughness:.4,metalness:.6}),0,.24,0));
+ const D=[
+  [1,'دو هفته‌ست ایمیلِ مدیرم درباره‌ی گزارش رو باز می‌کنم، می‌خونم، و می‌بندم. جواب نمی‌دم.',0,1,1,1],
+  [2,'تحویلِ گزارش رو یه روز عقب انداختم، چون بابام رو بردیم بیمارستان.',1,1,1,2],
+  [3,'شش ماهه نوبتِ دندون‌پزشکی نمی‌گیرم. دندونم هر شب تیر می‌کشه.',0,1,1,4],
+  [4,'خریدِ مبلِ جدید رو گذاشتم واسه سالِ بعد. مبلِ فعلی هنوز سالمه.',0,0,0,8],
+  [5,'جریمه‌ی دیرکردِ قبض اومد. خبر نداشتم ایمیل‌هاش میره تو اسپم.',0,1,0,16],
+  [6,'سه ماهه هر شب می‌گم «از فردا» پایان‌نامه رو شروع می‌کنم. ددلاینِ استادم ماهِ بعده.',0,1,1,32]];
+ const START=[[-3.7,2.2],[-1.3,2.9],[1.5,2.4],[3.7,1.6],[3.6,-1.4],[1.2,-.4]];
+ const face=(q,yes)=>tex((x,w,h)=>{wood(x,w,h);txt(x,q,28,90,w,'#3a2a1a',600);txt(x,yes?'آره':'نه',80,165,w,yes?'#24553a':'#7a2e2a')});
+ const plain=new THREE.MeshStandardMaterial({map:tex(wood),roughness:.85});
+ const crates=D.map((d,i)=>{const mats=[face('ضرر داره؟',d[3]),face('می‌دونی ضرر داره؟',d[4]),tex((x,w,h)=>{wood(x,w,h);txt(x,fd(d[0]),120,134,w,'#3a2a1a')}),null,face('دلیلِ موجه داره؟',d[2]),null].map(t=>t?new THREE.MeshStandardMaterial({map:t,roughness:.85}):plain);
+  const m=mesh(new THREE.BoxGeometry(.62,.62,.62),mats,START[i][0],.31,START[i][1]);m.rotation.y=[0,1,2,3,1,2][i]*Math.PI/2;g.add(m);return{n:d[0],t:d[1],w:d[5],m,state:'floor'}});
+ const pan=[];let ang=0;const panPos={x:S.x+1.3,z:S.z};
+ const inter=crates.map(c=>({c,get pos(){return{x:c.m.position.x,z:c.m.position.z}},r:.35,top:.9,meshes:[c.m],label:()=>c.state==='floor'&&!P.carry?'بردار':null,info:()=>c.state==='floor'?'جعبه‌ی '+fd(c.n)+': «'+c.t+'»':null,
+  focus:()=>c.state==='floor'&&!P.carry?{x:c.m.position.x,y:.35,z:c.m.position.z,az:null,el:.5,d:3.4,soft:true}:null,act(){P.carry=c;c.state='carry'}}));
+ inter.push({pos:panPos,r:.55,top:1.6,meshes:[panR.children[0]],label:()=>P.carry?'بذارش رو ترازو':pan.length?'آخری رو وردار':null,info:()=>pan.length?'روی ترازو: '+pan.map(c=>fd(c.n)).join('، '):'ترازو هنوز خالیه. وزنه‌ی اون طرف رو باید با جعبه‌های درست جبران کنی.',
+  focus:()=>({x:S.x+.3,y:1.05,z:S.z,az:.3,el:.32,d:5}),act(){if(P.carry){pan.push(P.carry);P.carry.state='pan';P.carry=null;beep([392])}else if(pan.length){const c=pan.pop();c.state='carry';P.carry=c}}});
+ return{g,title:'ترازوی قفل',sub:'فقط کارهایی که واقعاً اهمال‌ان رو بذار روی ترازو تا صاف بشه و در باز شه.',
+  hints:['کنارِ هر جعبه وایسا؛ دوربین روش زوم می‌کنه. بعد دوربین رو بچرخون (صفحه رو بکش یا Q و E) تا هر سه وجه رو بخونی.','فقط کاری اهماله که دلیلِ موجه نداره، ضرر داره، و خودت هم می‌دونی ضرر داره. یعنی «نه، آره، آره».','جعبه‌های ۱، ۳ و ۶ رو بذار روی ترازو.'],
+  win:['ترازو صاف شد. کلیدِ ۱: تستِ سه‌سؤالی','عقب انداختنِ هر کاری اهمال نیست. اگه دلیلِ موجه داری (مثلِ بیمارستانِ بابا)، اولویت‌بندیه. اگه ضرر نداره (مثلِ مبل)، فقط یه انتخابه. اگه خبر نداشتی (مثلِ اسپم)، ندونستنه. اهمال فقط وقتیه که هر سه‌تاش با هم باشه.'],
+  obs:()=>[{x:S.x,z:S.z,hx:1.95,hz:.5}].concat(crates.filter(c=>c.state==='floor').map(c=>({x:c.m.position.x,z:c.m.position.z,hx:.31,hz:.31}))),inter,
+  drop(){if(!P.carry)return false;const c=P.carry,fx=Math.sin(P.ry),fz=Math.cos(P.ry);let x=P.x+fx*.75,z=P.z+fz*.75;x=Math.max(-4.5,Math.min(4.5,x));z=Math.max(-3.5,Math.min(3.5,z));c.m.position.set(x,.31,z);c.state='floor';P.carry=null;return true},
+  update(dt){const sum=pan.reduce((s,c)=>s+c.w,0),d=sum-37,goal=d===0?0:-Math.sign(d)*Math.max(.1,Math.min(.3,Math.abs(d)*.012));ang+=(goal-ang)*Math.min(1,dt*4);beam.rotation.z=ang;
+   panR.position.set(1.3*Math.cos(ang),1.68+1.3*Math.sin(ang)-1.0,0);panL.position.set(-1.3*Math.cos(ang),1.68-1.3*Math.sin(ang)-1.0,0);
+   pan.forEach((c,i)=>{c.m.position.set(S.x+panR.position.x,panR.position.y+.34+i*.63,S.z);c.m.rotation.y=i*.25});
+   if(P.carry){P.carry.m.position.set(P.x,1.72,P.z);P.carry.m.rotation.y=P.ry}
+   if(d===0&&!P.carry&&Math.abs(ang)<.06)openDoor('ترازو صاف شد و در باز شد! برو بیرون.')}}}
+
+/* level B: the decoy room */
+function buildB(){const g=new THREE.Group(),wd=M('#7a6048'),dark=M('#4b3b2e');
+ const SH={x:-4.55,z:-.4};g.add(mesh(new THREE.BoxGeometry(.06,1.9,1.62),dark,-4.83,.95,SH.z),mesh(new THREE.BoxGeometry(.5,.05,1.62),wd,SH.x,.5,SH.z),mesh(new THREE.BoxGeometry(.5,.05,1.62),wd,SH.x,1.2,SH.z),mesh(new THREE.BoxGeometry(.5,.05,1.62),wd,SH.x,1.9,SH.z),mesh(new THREE.BoxGeometry(.5,1.9,.05),wd,SH.x,.95,SH.z-.79),mesh(new THREE.BoxGeometry(.5,1.9,.05),wd,SH.x,.95,SH.z+.79));
+ [['#6d6a63',.32],['#57606b',.4],['#7d6b55',.28],['#5d6b60',.36]].forEach((b,i)=>g.add(mesh(new THREE.BoxGeometry(.3,b[1],.16),M(b[0]),SH.x+.02,.525+b[1]/2,SH.z-.55+i*.2)));
+ const HT=[.36,.46,.55,.62,.72],COL=['#8a5a4e','#566b7d','#8f7d4c','#4f7262','#7a4f66'];let slots=[2,0,4,1,3],sel=-1,solved=false,firstTap=0,spent=0;
+ const books=HT.map((h,i)=>{const m=mesh(new THREE.BoxGeometry(.3,h,.17),M(COL[i],{emissive:new THREE.Color('#ffcf8a'),emissiveIntensity:0}),SH.x+.02,1.225+h/2,0);m.userData.b=i;g.add(m);return m});
+ const slotZ=i=>SH.z-.5+i*.25;
+ const spot=new THREE.SpotLight('#ffd7a0',1.7,8,.5,.6,1.4);spot.position.set(-2.6,3.6,SH.z);spot.target.position.set(-4.6,1.2,SH.z);g.add(spot,spot.target);
+ const DK={x:3.4,z:-2.5};g.add(mesh(new THREE.BoxGeometry(1.7,.08,.9),wd,DK.x,.78,DK.z));[[-.75,-.38],[.75,-.38],[-.75,.38],[.75,.38]].forEach(o=>g.add(mesh(new THREE.BoxGeometry(.07,.76,.07),dark,DK.x+o[0],.38,DK.z+o[1])));
+ const drawer=mesh(new THREE.BoxGeometry(.5,.16,.05),dark,DK.x-.2,.64,DK.z+.47);g.add(drawer);
+ const paperM=M('#efe9dd',{roughness:.95});for(let i=0;i<14;i++){const p=mesh(new THREE.PlaneGeometry(.36,.48),paperM,0,0,0,false,true);p.rotation.x=-Math.PI/2;p.rotation.z=i*1.7;if(i<8)p.position.set(DK.x-.6+((i*37)%12)/10,.83+i*.003,DK.z-.3+((i*53)%6)/10);else p.position.set(DK.x-1+((i*29)%20)/10,.006+i*.001,DK.z+.6+((i*17)%8)/10);g.add(p)}
+ g.add(mesh(new THREE.CylinderGeometry(.07,.06,.14,14),M('#3f5a63'),DK.x+.55,.89,DK.z-.15),mesh(new THREE.IcosahedronGeometry(.09,1),paperM,DK.x+.2,.9,DK.z+.2));
+ const BD={x:4.72,z:-.3};g.add(mesh(new THREE.BoxGeometry(.06,1.15,1.95),M('#a7865f'),BD.x,1.5,BD.z),mesh(new THREE.BoxGeometry(.06,1.0,.06),dark,BD.x,.5,BD.z-.8),mesh(new THREE.BoxGeometry(.06,1.0,.06),dark,BD.x,.5,BD.z+.8));
+ const NOTES=[
+  [2,'فرمِ بازپرداختِ بیمه‌ی درمان سه ماهه تو کیفمه. دو میلیون پولم گیرشه.'],
+  [4,'سفرِ آخرِ هفته رو کنسل کردم، چون ددلاینِ پروژه یهو جلو افتاد.'],
+  [5,'دوستم پرسیده «از دستم ناراحتی؟». یه هفته‌ست سین کردم و جواب ندادم.'],
+  [7,'لپ‌تاپِ قدیمی رو هنوز نفروختم. گوشه‌ی کمده و پولش رو لازم ندارم.'],
+  [9,'پاسپورتم رو تمدید نکردم. سفرِ کاری‌م شش هفته‌ی دیگه‌ست و نوبت‌ها پُره.']];
+ const NP=[[1.72,-.62],[1.72,0],[1.72,.62],[1.24,-.31],[1.24,.31]],NC=['#f3d98f','#f2b8a8','#cfe3b0','#f3d98f','#bcd6e6'];
+ NOTES.forEach((n,i)=>{const p=new THREE.Mesh(new THREE.PlaneGeometry(.46,.46),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle=NC[i];x.fillRect(0,0,w,h);txt(x,fd(n[0]),52,40,w,'#2a2428');wrap(x,n[1],21,92,w,'#2a2428',29)})}));p.position.set(BD.x-.035,NP[i][0],BD.z+NP[i][1]);p.rotation.y=-Math.PI/2;p.rotation.z=(i%2?.04:-.03);g.add(p)});
+ let step=0;
+ const inter=[
+  {pos:{x:SH.x+.45,z:SH.z},r:.5,top:2.1,meshes:books,label:()=>solved?null:'به کتاب‌ها دست بزن',info:()=>solved?'قفسه مرتبه.':'کتاب‌ها رو به ترتیبِ قد بچین: روی یکی بزن، بعد روی یکی دیگه تا جاشون عوض شه.',
+   focus:()=>({x:SH.x+.1,y:1.3,z:SH.z,az:1.05,el:.3,d:3.3}),act(){toast('روی دو تا کتاب بزن تا جاشون عوض شه.')}},
+  {pos:{x:DK.x-.6,z:DK.z+.75},r:.55,top:1.3,meshes:[drawer],label:()=>doorTarget?null:step===0?'برگه‌ها رو بزن کنار':'قفلِ کشو',info:()=>step===0?'یه میزِ شلوغ و بی‌حال. اصلاً دلت نمی‌خواد بهش دست بزنی.':null,
+   focus:()=>({x:DK.x-.1,y:.8,z:DK.z,az:.55,el:.72,d:3.4}),act(){if(step===0){step=1;note('یه برگه‌ی تاخورده','<p>زیرِ اون همه کاغذ یه یادداشت بود:</p><p><b>«رمزِ کشو = شماره‌ی کارهایی که واقعاً اهمال‌ان، از کوچیک به بزرگ. یادداشت‌های روی تخته رو بخون.»</b></p>')}else{['d0','d1','d2'].forEach(d=>$(d).value='');$('lockMsg').textContent='رمز رو بزن.';show('ovLock')}}},
+  {pos:{x:BD.x-.65,z:BD.z},r:.45,top:2.3,meshes:[],label:()=>'یادداشت‌ها رو از نزدیک بخون',info:()=>null,
+   focus:()=>({x:BD.x,y:1.48,z:BD.z,az:-1.4,el:.12,d:2.5}),act(){note('یادداشت‌های روی تخته','<ul>'+NOTES.map(n=>'<li><b>'+fd(n[0])+'</b><span>'+n[1]+'</span></li>').join('')+'</ul>')}}];
+ $('lockGo').onclick=()=>{const v=['d0','d1','d2'].map(d=>en($(d).value)).join('');if(v==='259'){show(null);drawer.position.z+=.32;openDoor('کشو باز شد. کلید توشه و در هم باز شد!')}else{const c=$('digs');c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake');$('lockMsg').textContent='نه، این نبود. یه بار دیگه یادداشت‌ها رو بخون.'}};
+ return{g,title:'اتاقِ فریبنده',sub:'درِ این اتاق قفله. کلیدش یه جایی همین‌جاست.',
+  hints:['هر چیزی که برق می‌زنه راهِ خروج نیست. برو سراغِ جایی که دلت نمی‌خواد بری.','زیرِ برگه‌های میزِ شلوغ یه یادداشت هست. بعد برو کنارِ تخته و یادداشت‌ها رو از نزدیک بخون.','رمزِ کشو ۲۵۹ه: بیمه، جوابِ دوستت، پاسپورت.'],
+  get win(){return['در باز شد. کلیدِ ۱: تستِ سه‌سؤالی',solved?'قفسه رو هم مرتب کردی، نه؟ حس خوبی داشت. اسمش اهمال‌کاریِ سازنده‌ست: یه کارِ مفید که جای کارِ اصلی رو می‌گیره. درِ واقعی همیشه پشتِ میزِ شلوغه.':'اصلاً سراغِ قفسه نرفتی؟ دمت گرم. خیلیا اول میرن سراغِ کارِ قشنگ و راحت. اسمش اهمال‌کاریِ سازنده‌ست: مفیده، ولی جای کارِ اصلی رو می‌گیره.']},
+  obs:()=>[{x:SH.x,z:SH.z,hx:.3,hz:.82},{x:DK.x,z:DK.z,hx:.88,hz:.48},{x:BD.x,z:BD.z,hx:.12,hz:1.0}],inter,
+  pick(hit){const b=hit.userData.b;if(b===undefined)return false;if(Math.hypot(P.x-SH.x,P.z-SH.z)>2.4){walk({x:SH.x+.9,z:SH.z},null);toast('اول برو نزدیکِ قفسه.');return true}if(solved)return true;if(!firstTap)firstTap=clock;
+   if(sel<0){sel=b}else if(sel===b){sel=-1}else{const i=slots.indexOf(sel),j=slots.indexOf(b);slots[i]=b;slots[j]=sel;sel=-1;beep([440]);
+    if(slots.every((v,k)=>k===0||HT[v]>HT[slots[k-1]])){solved=true;spent=Math.round(clock-firstTap);beep([523,659,784,1046]);toast('آفرین! قفسه مرتب شد… فقط یه چیزی: الان دقیقاً اهمال‌کاریِ سازنده کردی ('+fd(spent)+' ثانیه). در هنوز قفله.',5200)}}return true},
+  update(dt){books.forEach((m,i)=>{const s=slots.indexOf(i);m.position.z+=(slotZ(s)-m.position.z)*Math.min(1,dt*10);const ty=1.225+HT[i]/2+(sel===i?.12:0);m.position.y+=(ty-m.position.y)*Math.min(1,dt*10);m.material.emissiveIntensity=solved?.25:(.08+.07*Math.sin(clock*2.4))});
+   spot.intensity=solved?.6:1.7}}}
+
+/* level C: Eisenhower floor */
+function buildC(){const g=new THREE.Group();
+ const Q=[['q1',-1,-1,'فوری و مهم','همین الان انجامش بده','#b5654f'],['q2',1,-1,'مهم، ولی نه فوری','براش وقت بذار','#3f8f80'],['q3',-1,1,'فوری، ولی نه مهم','بسپارش به یکی دیگه','#b08d3f'],['q4',1,1,'نه فوری، نه مهم','بی‌خیالش شو','#6f737d']];
+ const tiles=Q.map(q=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(1.94,1.94),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle=q[5];x.globalAlpha=.55;x.fillRect(0,0,w,h);x.globalAlpha=1;x.strokeStyle='rgba(255,255,255,.55)';x.lineWidth=6;x.strokeRect(6,6,w-12,h-12);txt(x,q[3],34,108,w,'#ffffff');txt(x,q[4],24,152,w,'#ffffff',600)}),transparent:true,emissive:new THREE.Color(q[5]),emissiveIntensity:0}));m.rotation.x=-Math.PI/2;m.position.set(q[1],.012,q[2]);m.receiveShadow=true;g.add(m);return m});
+ const D=[
+  ['ارائه‌ی فردا ۹ صبح','ارائه‌ی فردا ساعتِ ۹ صبح جلوی مدیرعامل. اسلایدها نصفه‌ست.','q1',3.5,1.5],
+  ['آیلتسِ مهاجرت','دو ساله می‌خوام برای مهاجرت آیلتس بخونم. هیچ ددلاینی نداره و هیچ‌کس هم پیگیرش نیست.','q2',-3.5,1.5],
+  ['«فوری!» تو گروهِ کاری','همکارم تو گروه نوشته: «کسی فایلِ اکسلِ پارسال رو داره؟ فوری!» خودش هم می‌تونه پیداش کنه.','q3',3.5,-1.5],
+  ['بحث تو کامنت‌ها','یه غریبه زیرِ یه پست اشتباه گفته و نیم ساعته دارم جوابش رو می‌نویسم.','q4',-3.5,-1.5]];
+ const crates=D.map(d=>{const t=new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{wood(x,w,h);wrap(x,d[0],34,112,w,'#2f2216',42)}),roughness:.85});const m=mesh(new THREE.BoxGeometry(.84,.84,.84),t,d[3],.42,d[4]);g.add(m);return{s:d[0],t:d[1],q:d[2],x:d[3],z:d[4],m}});
+ const qOf=c=>Math.abs(c.x)<2&&Math.abs(c.z)<2?(c.z<0?(c.x<0?'q1':'q2'):(c.x<0?'q3':'q4')):null;
+ const inter=crates.map(c=>({get pos(){return{x:c.x,z:c.z}},r:.45,top:1.1,meshes:[c.m],label:()=>doorTarget?null:'هُل بده',info:()=>'«'+c.t+'»',act(){const dx=c.x-P.x,dz=c.z-P.z;let sx=0,sz=0;if(Math.abs(dx)>Math.abs(dz))sx=Math.sign(dx);else sz=Math.sign(dz);const nx=c.x+sx,nz=c.z+sz;
+   if(nx<-4.6||nx>4.6||nz<-3.6||nz>3.6||crates.some(o=>o!==c&&Math.abs(o.x-nx)<.1&&Math.abs(o.z-nz)<.1)){toast('اون طرف جا نداره.',1400);return}
+   c.x=nx;c.z=nz;beep([330]);if(crates.every(o=>qOf(o)===o.q))openDoor('همه سرِ جاشونن. در باز شد!')}}));
+ return{g,title:'کفِ چهارخونه',sub:'هر جعبه رو هل بده توی خونه‌ی درستش. جعبه‌ها فقط هل داده می‌شن.',
+  hints:['هر جعبه رو بخون و از خودت بپرس: واقعاً فوریه، یا فقط داد می‌زنه؟ واقعاً مهمه؟','جعبه‌ها مثلِ سوکوبان فقط هل داده می‌شن. پشتش وایسا و هل بده. ترتیب مهمه، چون جعبه‌ها جلوی هم رو می‌گیرن. گیر کردی؟ «از اول» رو بزن.','ارائه‌ی فردا: فوری و مهم. آیلتس: مهم ولی نه فوری. «فوری!»ِ گروه: فوری ولی نه مهم. بحثِ کامنت‌ها: هیچ‌کدوم.'],
+  win:['کلیدِ ۱: تستِ سه‌سؤالی','دیدی آیلتس کجا نشست؟ اهمال‌کاری معمولاً توی خونه‌ی «مهم ولی نه فوری» قایم می‌شه؛ جایی که هیچ زنگی برات نمی‌زنه و هیچ‌کس پیگیرش نیست. اون «فوری!»ِ گروه هم فقط بلند داد می‌زد.'],
+  obs:()=>crates.map(c=>({x:c.m.position.x,z:c.m.position.z,hx:.42,hz:.42})),inter,
+  update(dt){crates.forEach(c=>{c.m.position.x+=(c.x-c.m.position.x)*Math.min(1,dt*12);c.m.position.z+=(c.z-c.m.position.z)*Math.min(1,dt*12)});tiles.forEach((t,i)=>{const ok=crates.some(c=>c.q===Q[i][0]&&qOf(c)===c.q);t.material.emissiveIntensity+=((ok?.45:0)-t.material.emissiveIntensity)*Math.min(1,dt*6)})}}}
+
+/* room 2: hall of mirrors */
+function buildR2(){const g=new THREE.Group(),frameM=M('#3d3631',{roughness:.5,metalness:.35});
+ const W='این همون صدای منتقده، فقط با صدای خودت.',T='این فقط روش رو پوشوند. شرم زیرش هنوز هست.';
+ const MR=[
+  {p:[-4.62,-1.7],f:Math.PI/2,L:['ش','ک'],q:'باز هم ددلاین رو رد کردی. تو کلاً آدمِ بی‌مسئولیتی هستی.',a:[['این بار دیر شد چون کار رو خیلی بزرگ دیدم. دفعه‌ی بعد تیکه‌تیکه‌ش می‌کنم.',1],['آره، راست می‌گی. من همیشه همینم.',W],['ولش کن، تو عالی‌ای! ددلاین که مهم نیست.',T]]},
+  {p:[-4.62,1.7],f:Math.PI/2,L:['ر','ا'],q:'همه از پسش برمیان، جز تو.',a:[['راست می‌گی، من از همه عقب‌ترم.','مقایسه با بقیه فقط شرم رو بزرگ‌تر می‌کنه.'],['خیلیا همین گیر رو دارن. من هنوز روشِ شروع کردنش رو بلد نیستم؛ یاد می‌گیرم.',1],['بقیه هم الکی ادا درمیارن، به من چه.','این دفاعه، نه مهربونی. منتقد هنوز سرِ جاشه.']]},
+  {p:[4.62,-1.7],f:-Math.PI/2,L:['م','ر'],q:'سی سالته و هنوز نمی‌تونی یه کار رو تموم کنی.',a:[['دیگه دیره، بی‌خیال.','این تسلیم شدنه. منتقد دقیقاً همینو می‌خواد.'],['اشکال نداره، از فردا شروع می‌کنم.','از فردا؟ این که خودش اهماله!'],['سن ربطی نداره. تموم کردن یه مهارته، نه یه ویژگیِ ذاتی.',1]]},
+  {p:[4.62,1.7],f:-Math.PI/2,L:['و','ن'],q:'اگه واقعاً برات مهم بود، تا حالا انجامش داده بودی.',a:[['مهمه، و همین ترسناکش کرده. ترس با بی‌اهمیتی فرق داره.',1],['پس لابد واقعاً برام مهم نیست.','منتقد داره جات تصمیم می‌گیره. مهم بودن و ترسیدن با هم جمع می‌شن.'],['باید بیشتر به خودم سخت بگیرم.','سخت‌گیریِ بیشتر یعنی شرمِ بیشتر، و شرمِ بیشتر یعنی اهمالِ بیشتر.']]},
+  {p:[-2.2,3.72],f:Math.PI,L:['ه','ر'],q:'بقیه می‌فهمن چقدر بی‌عرضه‌ای.',a:[['باید یه جوری قایمش کنم که کسی نفهمه.','قایم کردن، شرم رو توی تاریکی بزرگ‌تر می‌کنه.'],['من کلاً بی‌عرضه‌ام، بذار بفهمن.','این همون برچسبِ شخصیتیه. باگ رفتاریه، نه شخصیتی.'],['اشتباه کردم؛ این با اشتباه بودنِ خودم فرق داره.',1]]}];
+ const right=m=>m.a.find(a=>a[1]===1)[0];
+ const mirTex=(m,done)=>tex((x,w,h)=>{const gr=x.createLinearGradient(0,0,w,h);gr.addColorStop(0,done?'#e8eef1':'#272c34');gr.addColorStop(1,done?'#c6d1d8':'#454c57');x.fillStyle=gr;x.fillRect(0,0,w,h);
+  if(!done){x.fillStyle='rgba(255,255,255,.05)';for(let i=0;i<7;i++)x.fillRect(0,(i*83)%h,w,16);txt(x,'منتقد',22,58,w,'#8d97a6',600);wrap(x,m.q,27,150,w,'#dde2ea',42)}
+  else{txt(x,m.L.join('    '),118,200,w,'#1f2a33');wrap(x,'«'+right(m)+'»',17,370,w,'#4a5560',26)}},256,540);
+ let cleared=0,released=false;
+ MR.forEach(m=>{const grp=new THREE.Group();grp.position.set(m.p[0],0,m.p[1]);grp.rotation.y=m.f;grp.add(mesh(new THREE.BoxGeometry(1.05,2.12,.1),frameM,0,1.06,0));
+  m.mat=new THREE.MeshStandardMaterial({map:mirTex(m,false),roughness:.22,metalness:.15});grp.add(mesh(new THREE.PlaneGeometry(.86,1.82),m.mat,0,1.08,.056,false,false));g.add(grp);
+  m.nx=Math.sin(m.f);m.nz=Math.cos(m.f);m.done=false});
+ // lore sign
+ const SG={x:2.2,z:3.75};g.add(mesh(new THREE.BoxGeometry(.06,1.1,.06),M('#4b3b2e'),SG.x,.55,SG.z));
+ const sign=mesh(new THREE.PlaneGeometry(.9,.55),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#d9cdb8';x.fillRect(0,0,w,h);x.strokeStyle='#6e5134';x.lineWidth=10;x.strokeRect(5,5,w-10,h-10);txt(x,'کیسه‌ی آگوستین',30,52,w,'#3a2a1a');wrap(x,'از هزار و ششصد سال پیش رو دوشِ ماست.',19,100,w,'#3a2a1a',26)},256,156)}),SG.x,1.2,SG.z-.04,false,false);sign.rotation.y=Math.PI;g.add(sign);
+ // door plaque with word pattern
+ const plaque=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.42),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#2b2622';x.fillRect(0,0,w,h);const words=[3,2,3,2],bs=17,gp=4,wg=15;let cx=w-14;words.forEach(n=>{for(let i=0;i<n;i++){x.strokeStyle='#e8a33d';x.lineWidth=2.5;x.strokeRect(cx-bs,46,bs,bs+6);cx-=bs+gp}cx-=wg-gp});txt(x,'یه جمله، چهار کلمه',15,24,w,'#c9b48a',600)},256,108)}));
+ plaque.position.set(.7,1.45,.065);hinge.add(plaque);
+ // the sack of shame on Marshi's back
+ const sack=new THREE.Group(),sackM=M('#4a4650',{roughness:.95});const sb=mesh(new THREE.SphereGeometry(1,24,18),sackM);sb.scale.set(.3,.34,.24);sack.add(sb);
+ sack.add(mesh(new THREE.CylinderGeometry(.05,.09,.12,10),sackM,0,.36,0));
+ const lab=new THREE.Mesh(new THREE.PlaneGeometry(.3,.18),new THREE.MeshBasicMaterial({map:tex((x,w,h)=>{x.fillStyle='#d9cdb8';x.fillRect(0,0,w,h);txt(x,'شرم',64,h/2+4,w,'#2a2428')},128,76),transparent:true}));lab.position.set(0,.02,-.245);lab.rotation.y=Math.PI;sack.add(lab);
+ sack.position.set(0,.66,-.38);H.body.add(sack);let fallT=-1;
+ const mats=[];sack.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.transparent=true;mats.push(o.material);HM.add(o.material)}});
+ // word lock
+ const BANK=MR.flatMap(m=>m.L.map(l=>({l,m})));let filled=[];
+ function renderWord(){let k=0;$('wSlots').innerHTML=[3,2,3,2].map(n=>'<div class="w">'+Array.from({length:n},()=>{const i=filled[k++];return'<span>'+(i!=null?BANK[i].l:'')+'</span>'}).join('')+'</div>').join('');
+  $('wBank').innerHTML=BANK.map((b,i)=>b.m.done?'<button class="lt" data-i="'+i+'"'+(filled.includes(i)?' disabled':'')+'>'+b.l+'</button>':'<button class="lt" disabled aria-label="هنوز پیدا نشده">؟</button>').join('')}
+ $('wBank').onclick=e=>{const b=e.target.closest('.lt');if(!b||b.disabled||filled.length>=10)return;filled.push(+b.dataset.i);renderWord()};
+ $('wDel').onclick=()=>{filled.pop();renderWord()};
+ $('wGo').onclick=()=>{const s=filled.map(i=>BANK[i].l).join('');if(s==='شرمرورهاکن'){show(null);release();return}
+  const c=$('wSlots');c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake');$('wMsg').textContent=cleared<5?'هنوز همه‌ی حرف‌ها رو نداری. آینه‌های دیگه رو هم صاف کن.':filled.length<10?'هنوز جای خالی داری.':'نه، این نبود. یه نگاه به کیسه‌ی روی دوشت بنداز.'};
+ function release(){released=true;const wp=new THREE.Vector3();sack.getWorldPosition(wp);H.body.remove(sack);mats.forEach(m=>{HM.delete(m);m.opacity=1;m.depthWrite=true});sack.position.copy(wp);sack.rotation.y=P.ry;g.add(sack);fallT=0;openDoor('شرم رو گذاشتی زمین. در باز شد.')}
+ // pick a reply
+ let cur=null;
+ function ask(m){cur=m;$('pickQ').textContent='«'+m.q+'»';$('pickMsg').textContent='';$('pickA').innerHTML=m.a.map((a,i)=>'<button class="opt" data-i="'+i+'">'+a[0]+'</button>').join('');show('ovPick')}
+ $('pickA').onclick=e=>{const b=e.target.closest('.opt');if(!b||!cur)return;const a=cur.a[+b.dataset.i];
+  if(a[1]===1){cur.done=true;cur.mat.map=mirTex(cur,true);cur.mat.needsUpdate=true;cleared++;beep([523,784]);show(null);toast(cleared<5?'آینه صاف شد و دو تا حرف روش پیدا شد. کیسه یه کم سبک‌تر شد.':'همه‌ی آینه‌ها صاف شدن. حالا برو سراغِ در.')}
+  else{b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');b.disabled=true;$('pickMsg').textContent=a[1]}};
+ const inter=MR.map(m=>({pos:{x:m.p[0]+m.nx*.75,z:m.p[1]+m.nz*.75},r:.4,top:2.3,meshes:[],label:()=>m.done?null:'جوابِ آینه رو بده',info:()=>m.done?'حرف‌های این آینه: '+m.L.join(' و '):null,
+  focus:()=>({x:m.p[0]+m.nx*.06,y:1.15,z:m.p[1]+m.nz*.06,az:m.f,el:.1,d:2.7}),act(){ask(m)}}));
+ inter.push({pos:{x:0,z:-3.4},r:.4,top:2.6,meshes:[],label:()=>doorTarget?null:'قفلِ در',info:()=>doorTarget?null:'روی در حک شده: یه جمله، چهار کلمه، ۳ و ۲ و ۳ و ۲ حرفی.',
+  focus:()=>doorTarget?null:{x:0,y:1.4,z:-4.1,az:0,el:.1,d:2.7},act(){filled=[];$('wMsg').textContent=cleared<5?'فعلاً '+fd(cleared*2)+' تا از ۱۰ حرف رو داری.':'همه‌ی حرف‌ها رو داری. بچینشون.';renderWord();show('ovWord')}});
+ inter.push({pos:{x:SG.x,z:SG.z-.75},r:.4,top:1.8,meshes:[],label:()=>'تابلو رو بخون',info:()=>null,focus:()=>({x:SG.x,y:1.15,z:SG.z,az:Math.PI,el:.12,d:2.2}),
+  act(){note('کیسه‌ی آگوستین','<p>آگوستینِ قدیس جوونیاش دعا می‌کرد: <b>«خدایا پاکم کن… ولی نه هنوز!»</b></p><p>بعدها گفت مشکل نه دونستنه، نه مهارت؛ مشکل خودِ آدمه. این‌جوری عقب انداختن شد گناه، و بیشتر از هزار سال آدما این کیسه رو با خودشون حمل کردن.</p><p>هر آینه یه تیکه از راهِ زمین گذاشتنش رو نشون می‌ده.</p>')}});
+ return{g,title:'تالارِ آینه‌ها',sub:'یه کیسه‌ی سنگین رو دوشته. راهِ زمین گذاشتنش روی آینه‌هاست.',intro:'یه چیزی رو دوشته… سنگینه.',
+  hints:['برو جلوی هر آینه و جوابِ منتقد رو بده. جوابِ درست نه خودت رو می‌کوبه، نه الکی تعریف می‌کنه؛ همون حرفیه که به یه دوست می‌زدی.','هر آینه که صاف بشه، دو تا حرف نشون می‌ده. ده تا حرف جمع کن. بعد ببین روی کیسه‌ی روی دوشت چی نوشته.','جواب: شرم رو رها کن.'],
+  win:['کیسه رو گذاشتی زمین. کلیدِ ۲: تستِ دوستِ صمیمی','اهمال‌کاری باگِ رفتاریه، نه باگِ شخصیتی. پژوهش‌ها نشون می‌دن هر چی بیشتر خودت رو سرزنش کنی، دفعه‌ی بعد بیشتر عقب می‌ندازی. جواب‌هایی که به آینه‌ها دادی، همون حرف‌هایی‌ان که به یه دوست می‌زدی. حالا به خودت هم بزن.'],
+  speed:()=>released?1:.58+cleared*.07,hunch:()=>released?0:.13-cleared*.022,
+  obs:()=>MR.map(m=>Math.abs(m.nx)>.5?{x:m.p[0],z:m.p[1],hx:.14,hz:.56}:{x:m.p[0],z:m.p[1],hx:.56,hz:.14}).concat([{x:SG.x,z:SG.z,hx:.45,hz:.1}]),inter,
+  update(dt){if(!released){const s=1-cleared*.1;sack.scale.setScalar(s)}
+   const fn=released?22:6+cleared*3,ff=released?40:16+cleared*4.5;scene.fog.near+=(fn-scene.fog.near)*Math.min(1,dt*2);scene.fog.far+=(ff-scene.fog.far)*Math.min(1,dt*2);
+   if(fallT>=0){fallT+=dt;sack.position.y=Math.max(.2,sack.position.y-dt*2.2);mats.forEach(m=>m.opacity=Math.max(0,1-Math.max(0,fallT-1)));if(fallT>2.2){g.remove(sack);fallT=-2}}},
+  dispose(){H.body.remove(sack);mats.forEach(m=>HM.delete(m));hinge.remove(plaque);scene.fog.near=22;scene.fog.far=40}}}
+
+/* level 5: the evidence file */
+function buildR3(){const g=new THREE.Group(),wd=M('#7a6048'),dark=M('#4b3b2e'),fab=M('#6f5a52'),paperM=M('#efe9dd',{roughness:.95});
+ const EV=[
+  {l:'B',d:'مهر ۱۳۹۶',t:'کارنامه‌ی کنکور',s:'بارِ اول قبول نشدی. یه سالِ دیگه خوندی و قبول شدی.'},
+  {l:'E',d:'اسفند ۱۳۹۷',t:'فیشِ اولین حقوق',s:'از شرکتی که فکر می‌کردی هیچ‌وقت استخدامت نمی‌کنه.'},
+  {l:'L',d:'تیر ۱۳۹۹',t:'گواهینامه‌ی رانندگی',s:'دو بار توی امتحانِ شهر رد شدی؛ بارِ سوم گرفتی.'},
+  {l:'I',d:'آبان ۱۴۰۰',t:'مدالِ اولین ۵ کیلومتر',s:'سه ماه قبلش ۵۰۰ متر هم نمی‌تونستی بدوی.'},
+  {l:'E',d:'خرداد ۱۴۰۱',t:'کارتِ سخنران',s:'اولین ارائه‌ت جلوی پنجاه نفر. شبِ قبلش از استرس نخوابیده بودی.'},
+  {l:'V',d:'بهمن ۱۴۰۲',t:'کارنامه‌ی آیلتس',s:'بارِ اول ۵٫۵ گرفتی، بارِ دوم ۷.'},
+  {l:'E',d:'مهر ۱۴۰۳',t:'بلیتِ اولین سفرِ تنهایی',s:'کلِ مسیر رو خودت برنامه ریختی و هیچی خراب نشد.'}];
+ const found=[],slots=Array(7).fill(null);let sel=null,revealed=false;
+ const cardTex=(e,show)=>tex((x,w,h)=>{x.fillStyle=show?'#f6e7c1':'#f4efe6';x.fillRect(0,0,w,h);x.strokeStyle='#b9ab97';x.lineWidth=6;x.strokeRect(3,3,w-6,h-6);if(show){x.fillStyle='#2a2428';x.font='800 150px Georgia, serif';x.textAlign='center';x.textBaseline='middle';x.fillText(e.l,w/2,h/2+8)}else{wrap(x,e.t,24,90,w,'#2a2428',32);txt(x,e.d,22,210,w,'#7a2e2a',600)}},200,260);
+ // props
+ g.add(mesh(new THREE.BoxGeometry(.85,.32,.85),fab,-3.6,.24,2.7),mesh(new THREE.BoxGeometry(.18,.75,.85),fab,-3.98,.62,2.7),mesh(new THREE.BoxGeometry(.85,.22,.14),fab,-3.6,.5,2.3),mesh(new THREE.BoxGeometry(.85,.22,.14),fab,-3.6,.5,3.1));
+ const chairPaper=mesh(new THREE.PlaneGeometry(.3,.4),paperM,-3.5,.41,2.7,false,true);chairPaper.rotation.x=-Math.PI/2;chairPaper.rotation.z=.4;g.add(chairPaper);
+ g.add(mesh(new THREE.BoxGeometry(.5,.95,.95),wd,4.62,.475,1.0));const cabHinge=new THREE.Group();cabHinge.position.set(4.36,0,1.47);g.add(cabHinge);cabHinge.add(mesh(new THREE.BoxGeometry(.04,.88,.92),dark,0,.47,-.46));
+ const box=mesh(new THREE.BoxGeometry(.55,.22,.36),M('#c7b08a'),3.4,.11,-2.9),lid=mesh(new THREE.BoxGeometry(.58,.05,.39),M('#b39a72'),3.4,.245,-2.9);g.add(box,lid);
+ g.add(mesh(new THREE.CylinderGeometry(.035,.035,1.75,10),dark,4.45,.875,3.45),mesh(new THREE.CylinderGeometry(.25,.28,.05,18),dark,4.45,.025,3.45));const coat=mesh(new THREE.BoxGeometry(.18,.75,.5),M('#3f4a52'),4.38,1.22,3.45);g.add(coat);
+ const medal=mesh(new THREE.TorusGeometry(.07,.02,8,20),M('#c9a24a',{metalness:.6,roughness:.35}),4.27,1.05,3.2);medal.rotation.y=Math.PI/2;g.add(medal);
+ g.add(mesh(new THREE.CylinderGeometry(.32,.32,.04,20),wd,-1.6,.6,3.5),mesh(new THREE.CylinderGeometry(.04,.04,.6,8),dark,-1.6,.3,3.5),mesh(new THREE.CylinderGeometry(.11,.15,.28,14),M('#e9dcc2',{emissive:new THREE.Color('#ffd7a0'),emissiveIntensity:.5}),-1.75,.78,3.6));
+ const lamp=new THREE.PointLight('#ffd7a0',.6,4);lamp.position.set(-1.75,1.1,3.6);g.add(lamp);
+ const tCard=mesh(new THREE.PlaneGeometry(.18,.26),M('#d6e3ea'),-1.5,.625,3.4,false,true);tCard.rotation.x=-Math.PI/2;g.add(tCard);
+ const rug=mesh(new THREE.PlaneGeometry(2.2,1.5),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#7d3b33';x.fillRect(0,0,w,h);x.strokeStyle='#d9b77a';x.lineWidth=10;x.strokeRect(14,14,w-28,h-28);x.strokeRect(40,40,w-80,h-80);x.fillStyle='#d9b77a';for(let i=0;i<5;i++){x.beginPath();x.arc(60+i*34,h/2,9,0,7);x.fill()}},256,176),roughness:.95}),1.0,.008,.8,false,true);rug.rotation.x=-Math.PI/2;g.add(rug);
+ const rugPaper=mesh(new THREE.PlaneGeometry(.3,.4),paperM,1.0,.004,.8,false,true);rugPaper.rotation.x=-Math.PI/2;g.add(rugPaper);
+ const suit=mesh(new THREE.BoxGeometry(.9,.26,.6),M('#5d4637'),-3.9,.13,-2.9);g.add(suit);const sLidP=new THREE.Group();sLidP.position.set(-3.9,.26,-3.2);g.add(sLidP);sLidP.add(mesh(new THREE.BoxGeometry(.9,.08,.6),M('#6b5242'),0,.04,.3));
+ // board on the west wall
+ const BX=-4.78;g.add(mesh(new THREE.BoxGeometry(.06,1.3,2.7),M('#a7865f'),BX,1.5,0),mesh(new THREE.BoxGeometry(.06,1.0,.06),dark,BX,.5,-1.2),mesh(new THREE.BoxGeometry(.06,1.0,.06),dark,BX,.5,1.2));
+ const q=new THREE.Mesh(new THREE.PlaneGeometry(.9,.22),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#16171a';x.fillRect(0,0,w,h);txt(x,'از پسش برمیام؟',30,h/2+2,w,'#f4f2ef')},256,64)}));q.position.set(BX+.035,1.98,0);q.rotation.y=Math.PI/2;g.add(q);
+ const str=mesh(new THREE.CylinderGeometry(.008,.008,2.5,4),M('#b5383a'),BX+.04,1.62,0,false,false);str.rotation.x=Math.PI/2;g.add(str);
+ const arr=new THREE.Mesh(new THREE.PlaneGeometry(2.5,.12),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#a7865f';x.fillRect(0,0,w,h);x.fillStyle='#3a2a1a';x.font='600 30px Vazirmatn, Tahoma, sans-serif';x.textBaseline='middle';x.direction='ltr';x.textAlign='left';x.fillText('قدیمی‌تر',10,h/2);x.textAlign='right';x.fillText('جدیدتر',w-10,h/2);x.fillRect(150,h/2-2,212,4)},512,48)}));arr.position.set(BX+.035,.95,0);arr.rotation.y=Math.PI/2;g.add(arr);
+ const slotZ=i=>1.05-i*.35;const pins=EV.map(()=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(.3,.39),new THREE.MeshStandardMaterial({color:'#ffffff'}));m.rotation.y=Math.PI/2;m.visible=false;g.add(m);return m});
+ function sync3d(){slots.forEach((e,i)=>{const m=pins[i];if(e==null){m.visible=false;return}m.visible=true;m.position.set(BX+.04,1.3,slotZ(i));const key=e+(revealed?'r':'');if(m.userData.k!==key){m.material.map=cardTex(EV[e],revealed);m.material.needsUpdate=true;m.userData.k=key}})}
+ // door plaque: seven boxes
+ const plaque=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.36),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#2b2622';x.fillRect(0,0,w,h);for(let i=0;i<7;i++){x.strokeStyle='#e8a33d';x.lineWidth=2.5;x.strokeRect(22+i*31,40,24,30)}txt(x,'یه کلمه، هفت حرف',15,22,w,'#c9b48a',600)},256,92)}));plaque.position.set(.7,1.45,.065);hinge.add(plaque);
+ const sub='هفت مدرک توی این اتاق قایم شده. پیداشون کن و پرونده رو مرتب کن.';
+ function find(i,msg){if(found.includes(i))return;found.push(i);beep([523,659]);$('objS').textContent=sub+' مدرک‌ها: '+fd(found.length)+' از ۷.';note(EV[i].t,'<p class="small">'+EV[i].d+'</p><p>'+EV[i].s+'</p><p class="small">'+msg+' ('+fd(found.length)+' از ۷)</p>')}
+ const st={chair:0,cab:0,box:0,rack:0,table:0,rug:0,suit:0};let rugT=0;
+ const P1=(x,z,r,lab,key,i,fx,msg)=>({pos:{x,z},r,top:1.4,meshes:[],label:()=>st[key]?null:lab,info:()=>null,act(){st[key]=1;if(fx)fx();chairPaper.visible=!st.chair;tCard.visible=!st.table;rugPaper.visible=!st.rug||rugT<.9;find(i,msg)}});
+ const inter=[
+  P1(-2.8,2.7,.4,'صندلی رو نگاه کن','chair',0,null,'لای کوسن‌های صندلی بود.'),
+  P1(3.75,1.0,.4,'درِ کمد رو باز کن','cab',1,null,'تهِ کمد، لای یه پوشه.'),
+  P1(3.4,-2.25,.4,'درِ جعبه رو بردار','box',2,null,'توی جعبه‌ی کفش، زیرِ رسیدهای قدیمی.'),
+  P1(3.75,3.0,.4,'جالباسی رو بگرد','rack',3,null,'از جیبِ کت آویزون بود.'),
+  P1(-1.6,2.75,.4,'میز رو نگاه کن','table',4,null,'زیرِ چراغ‌مطالعه.'),
+  P1(1.0,.8,.9,'فرش رو کنار بزن','rug',5,null,'زیرِ فرش قایمش کرده بودی.'),
+  P1(-3.9,-2.05,.4,'چمدون رو باز کن','suit',6,null,'توی جیبِ چمدون.'),
+  {pos:{x:BX+.8,z:0},r:.5,top:2.4,meshes:[],label:()=>revealed?'پرونده رو دوباره ببین':'پرونده رو مرتب کن',info:()=>revealed?'پشتِ کارت‌ها یه کلمه‌ست.':'وسطِ تخته نوشته: «از پسش برمیام؟»',focus:()=>({x:BX,y:1.45,z:0,az:Math.PI/2,el:.08,d:3.0}),act(){sel=null;$('bMsg').textContent=found.length<7?'فعلاً '+fd(found.length)+' تا از ۷ مدرک رو پیدا کردی.':'همه‌ی مدرک‌ها رو داری. به ترتیبِ تاریخ بچینشون.';renderBoard();show('ovBoard')}},
+  {pos:{x:0,z:-3.4},r:.4,top:2.6,meshes:[],label:()=>doorTarget?null:'قفلِ در',info:()=>doorTarget?null:'روی در حک شده: یه کلمه، هفت حرف.',focus:()=>doorTarget?null:{x:0,y:1.4,z:-4.1,az:0,el:.1,d:2.7},act(){for(let i=0;i<7;i++)$('c'+i).value='';$('cMsg').textContent='رمز رو بزن.';show('ovCode')}}];
+ function renderBoard(){$('bSlots').innerHTML=slots.map((e,i)=>'<button class="bs'+(e!=null?' on':'')+'" data-s="'+i+'">'+(e==null?'<span class="small">'+fd(i+1)+'</span>':revealed?'<b class="big">'+EV[e].l+'</b>':'<b>'+EV[e].t+'</b><span>'+EV[e].d+'</span>')+'</button>').join('');
+  const inv=found.filter(i=>!slots.includes(i));$('bInv').innerHTML=inv.length?inv.map(i=>'<button class="bi'+(sel===i?' sel':'')+'" data-e="'+i+'"><b>'+EV[i].t+'</b><span>'+EV[i].d+'</span></button>').join(''):'<p class="small">'+(found.length<7?'مدرکِ دیگه‌ای همراهت نیست. اتاق رو بگرد.':'همه روی تخته‌ان.')+'</p>';$('bFlip').disabled=revealed;sync3d()}
+ $('bInv').onclick=e=>{const b=e.target.closest('.bi');if(!b||revealed)return;sel=+b.dataset.e;renderBoard()};
+ $('bSlots').onclick=e=>{const b=e.target.closest('.bs');if(!b||revealed)return;const s=+b.dataset.s;if(sel!=null){slots[s]=sel;sel=null}else if(slots[s]!=null)slots[s]=null;renderBoard()};
+ $('bFlip').onclick=()=>{if(slots.some(v=>v==null)){$('bMsg').textContent=found.length<7?'هنوز همه‌ی مدرک‌ها رو پیدا نکردی.':'هنوز جای خالی داری.';return}
+  const c=slots.filter((v,i)=>v===i).length;if(c===7){revealed=true;beep([523,659,784,1046]);$('bMsg').textContent='پرونده مرتب شد و کارت‌ها برگشتن. حالا برو سراغِ در.';renderBoard()}
+  else{const el=$('bSlots');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');$('bMsg').textContent=fd(c)+' تا از ۷ کارت سرِ جای درستشونن. کارت‌ها فقط وقتی برمی‌گردن که ترتیبِ زمانی درست باشه.'}};
+ $('cGo').onclick=()=>{const v=Array.from({length:7},(_,i)=>$('c'+i).value).join('').toUpperCase();if(v==='BELIEVE'){show(null);openDoor('BELIEVE. در باز شد.')}else{const el=$('cIn');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');$('cMsg').textContent=revealed?'نه، این نبود. پشتِ کارت‌ها رو دوباره بخون.':'نه، این نبود. شاید جوابش روی تخته‌ست.'}};
+ return{g,title:'',sub,
+  hints:['هفت مدرک توی اتاق قایم شده: لای صندلی، توی کمد، توی جعبه، توی جالباسی، روی میز، زیرِ فرش و توی چمدون.','مدرک‌ها رو روی تخته به ترتیبِ تاریخ بچین، قدیمی‌ترین سمتِ چپ. تخته بهت می‌گه چند تاش سرِ جاشه. وقتی همه درست باشن، کارت‌ها برمی‌گردن.','ترتیب: کنکور، حقوق، گواهینامه، مدال، ارائه، آیلتس، سفر. رمزِ در: BELIEVE'],
+  win:['پرونده بسته شد. کلیدِ ۳: کوچک‌ترین قدم','خودکارآمدی یعنی باور به این‌که از پسِ یه کارِ مشخص برمیای. این باور با فکر کردن ساخته نمی‌شه؛ با شواهد ساخته می‌شه. هر کدوم از این مدرک‌ها یه روزی فقط یه قدمِ کوچیک و ترسناک بود. هر قدمی که امروز برداری، مدرکِ فردای خودته.'],
+  obs:()=>[{x:-3.62,z:2.7,hx:.45,hz:.47},{x:4.62,z:1.0,hx:.27,hz:.5},{x:3.4,z:-2.9,hx:.3,hz:.2},{x:4.45,z:3.45,hx:.25,hz:.3},{x:-1.6,z:3.5,hx:.34,hz:.34},{x:-3.9,z:-2.9,hx:.47,hz:.32},{x:BX,z:0,hx:.1,hz:1.36}],inter,
+  update(dt){if(st.cab)cabHinge.rotation.y+=(-1.6-cabHinge.rotation.y)*Math.min(1,dt*4);if(st.box){lid.position.y+=(.62-lid.position.y)*Math.min(1,dt*4);lid.position.x+=(3.95-lid.position.x)*Math.min(1,dt*4)}
+   if(st.suit)sLidP.rotation.x+=(-1.4-sLidP.rotation.x)*Math.min(1,dt*4);if(st.rack)coat.position.z+=(3.7-coat.position.z)*Math.min(1,dt*4);medal.visible=!st.rack;
+   if(st.rug&&rugT<1){rugT=Math.min(1,rugT+dt*1.6);rug.position.x=1.0+rugT*1.5;rugPaper.visible=rugT<.9}},
+  dispose(){hinge.remove(plaque)}}}
+
+/* level 6: the train that always leaves */
+function buildR4(){const g=new THREE.Group(),dark=M('#2f2c2a'),metal=M('#55575c',{roughness:.5,metalness:.4});
+ northG.visible=false;const oldBg=scene.background.clone();scene.background=new THREE.Color('#14161c');scene.fog.color=new THREE.Color('#14161c');
+ // track and platform edge
+ g.add(mesh(new THREE.BoxGeometry(70,.2,2.2),M('#3a3633'),0,-.7,-5.3,false,true));[-4.75,-5.85].forEach(z=>g.add(mesh(new THREE.BoxGeometry(70,.08,.08),metal,0,-.56,z,false,false)));
+ const edge=mesh(new THREE.PlaneGeometry(10,.22),M('#d8b23a'),0,.006,-3.82,false,true);edge.rotation.x=-Math.PI/2;g.add(edge);
+ // lamps
+ [[-4,-2.6],[4,-2.6],[-4,2.6]].forEach(p=>{g.add(mesh(new THREE.CylinderGeometry(.05,.07,2.6,8),dark,p[0],1.3,p[1]),mesh(new THREE.SphereGeometry(.16,14,10),new THREE.MeshBasicMaterial({color:'#ffd9a0'}),p[0],2.65,p[1],false,false));const l=new THREE.PointLight('#ffcf8a',.9,6.5);l.position.set(p[0],2.5,p[1]);g.add(l)});
+ // departure board
+ const brd=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.1),new THREE.MeshBasicMaterial({color:'#ffffff'}));brd.position.set(-2.2,2.45,-3.55);g.add(brd);
+ g.add(mesh(new THREE.BoxGeometry(2.75,1.22,.08),dark,-2.2,2.45,-3.6),mesh(new THREE.BoxGeometry(.07,1.9,.07),dark,-3.4,.95,-3.6),mesh(new THREE.BoxGeometry(.07,1.9,.07),dark,-1.0,.95,-3.6));
+ // poster
+ const ad=new THREE.Mesh(new THREE.PlaneGeometry(.9,1.25),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#e9e1d2';x.fillRect(0,0,w,h);x.fillStyle='#b5383a';x.fillRect(0,0,w,70);txt(x,'تخفیفِ ویژه',30,36,w,'#ffffff');wrap(x,'دوره‌ی ۳۰ روزه‌ی آمادگی برای شروعِ دوره‌ی آمادگی',24,140,w,'#2a2428',34);txt(x,'ثبت‌نام: از فردا',22,320,w,'#7a2e2a',600)},256,356)}));ad.position.set(4.82,1.1,0);ad.rotation.y=-Math.PI/2;g.add(ad);
+ // bench + suitcase
+ const BN={x:3.2,z:1.9};g.add(mesh(new THREE.BoxGeometry(1.8,.08,.5),M('#6b5242'),BN.x,.48,BN.z),mesh(new THREE.BoxGeometry(1.8,.5,.06),M('#6b5242'),BN.x,.78,BN.z+.24),mesh(new THREE.BoxGeometry(.06,.46,.45),dark,BN.x-.8,.23,BN.z),mesh(new THREE.BoxGeometry(.06,.46,.45),dark,BN.x+.8,.23,BN.z));
+ const caseM=M('#7a3b33',{roughness:.7}),suit=new THREE.Group();suit.position.set(BN.x-.3,.52,BN.z-.05);g.add(suit);suit.add(mesh(new THREE.BoxGeometry(.7,.2,.48),caseM,0,.1,0));const sLid=new THREE.Group();sLid.position.set(0,.2,.24);suit.add(sLid);sLid.add(mesh(new THREE.BoxGeometry(.7,.06,.48),caseM,0,.03,-.24));sLid.rotation.x=-1.9;
+ [['#e9e1d2',.15,-.12],['#3f4a52',-.15,.05],['#c9a24a',.1,.12]].forEach(c=>suit.add(mesh(new THREE.BoxGeometry(.2,.12,.16),M(c[0]),c[1],.22,c[2])));
+ const extras=[mesh(new THREE.BoxGeometry(.22,.12,.14),M('#8e9399',{metalness:.5,roughness:.4}),BN.x+.35,.58,BN.z-.05),mesh(new THREE.BoxGeometry(.18,.24,.06),M('#2f5d7a'),BN.x+.62,.64,BN.z),mesh(new THREE.BoxGeometry(.32,.06,.4),M('#26282d'),BN.x+.55,.55,BN.z-.12)];extras.forEach(e=>{e.visible=false;g.add(e)});
+ const carried=new THREE.Group();carried.add(mesh(new THREE.BoxGeometry(.16,.42,.56),caseM,0,0,0),mesh(new THREE.BoxGeometry(.04,.08,.18),dark,0,.25,0));carried.position.set(.5,.34,0);carried.visible=false;H.body.add(carried);
+ // conductor
+ const CD={x:1.4,z:-3.2},cond=new THREE.Group();cond.position.set(CD.x,0,CD.z);g.add(cond);cond.add(mesh(new THREE.CylinderGeometry(.26,.3,1.35,18),M('#2c3a4f'),0,.68,0),mesh(new THREE.SphereGeometry(.22,18,14),M('#d9c7b4'),0,1.52,0),mesh(new THREE.CylinderGeometry(.24,.24,.12,18),M('#1d2635'),0,1.72,0),mesh(new THREE.BoxGeometry(.3,.03,.14),M('#1d2635'),0,1.67,.18));
+ cond.rotation.y=Math.PI*.85;
+ // train
+ const train=new THREE.Group();train.position.set(26,0,-5.15);g.add(train);const tb=M('#3d5a63',{roughness:.6,metalness:.2});
+ train.add(mesh(new THREE.BoxGeometry(11,2.25,1.3),tb,0,.68,0),mesh(new THREE.BoxGeometry(11,.1,1.36),M('#d8b23a'),0,.05,0));
+ const winM=new THREE.MeshStandardMaterial({color:'#2a2a2a',emissive:new THREE.Color('#ffd9a0'),emissiveIntensity:.8});[-4,-2.4,2.4,4].forEach(x=>train.add(mesh(new THREE.BoxGeometry(1.2,.6,.02),winM,x,1.15,.66,false,false)));
+ const dL=mesh(new THREE.BoxGeometry(.6,1.7,.04),M('#2f464d'),-.3,.62,.67),dR=mesh(new THREE.BoxGeometry(.6,1.7,.04),M('#2f464d'),.3,.62,.67);train.add(dL,dR);
+ const inside=mesh(new THREE.PlaneGeometry(1.2,1.7),new THREE.MeshBasicMaterial({color:'#ffe2b0'}),0,.62,.645,false,false);train.add(inside);
+ const head=new THREE.PointLight('#fff2d0',0,9);head.position.set(-5.8,.8,0);train.add(head);
+ // state
+ const DEST=['مهاجرت','استارتاپِ خودم','کتابی که می‌خواستم بنویسم','آخرین قطار'],TIME=['۲۳:۴۰','۲۳:۴۱','۲۳:۴۲','۲۳:۴۳'];
+ let foldN=0,tS='away',tT=24,dest=0,missed=0,doorK=0,boardOK=false,closed=false,fold=0,folding=0,bKey='';
+ const IT=[['پاسپورت و بلیت',5,0],['لپ‌تاپ',18,0],['شارژر',4,0],['لباس برای سه روز',28,0],['مسواک و خمیردندون',5,0],
+  ['اتوی مسافرتی، که لباس‌ها بی‌نقص باشن',22,'شروع،'],['کتابِ ۵۰۰ صفحه‌ای: «چطور برای سفر آماده شیم»',24,'آماده‌ت'],['کتِ رسمی، اگه یه وقت جلسه‌ی مهمی پیش اومد',30,'می‌کنه']].map((a,i)=>({n:a[0],v:a[1],tag:a[2],in:true,i}));
+ const used=()=>Math.round(IT.filter(t=>t.in).reduce((s,t)=>s+t.v,0)*(1-fold));
+ function drawBoard(){const k=dest+'|'+tS+'|'+missed;if(k===bKey)return;bKey=k;brd.material.map=tex((x,w,h)=>{x.fillStyle='#101317';x.fillRect(0,0,w,h);txt(x,'حرکت‌ها',30,30,w,'#d8b23a');
+  DEST.forEach((d,i)=>{const y=76+i*40,gone=i<dest,now=i===dest;x.fillStyle=now?'#1d2a30':'#101317';x.fillRect(12,y-17,w-24,34);x.direction='rtl';x.textBaseline='middle';x.font='600 22px Vazirmatn, Tahoma, sans-serif';
+   x.textAlign='right';x.fillStyle=gone?'#5b5f66':'#f2efe8';x.fillText(TIME[i]+'   '+d,w-24,y);x.textAlign='left';x.fillStyle=gone?'#b5383a':now?(tS==='docked'?'#7fd18b':'#d8b23a'):'#8a8d96';
+   x.fillText(gone?'رفت':now?(tS==='docked'?'سوار شید':tS==='leaving'?'رفت':'نزدیک می‌شه'):'—',24,y)})},512,228);brd.material.needsUpdate=true}
+ drawBoard();
+ const fmt=s=>fd(Math.floor(s/60))+':'+fd(String(Math.max(0,Math.floor(s%60))).padStart(2,'0'));
+ const sub='قطارها منتظرت نمی‌مونن.';
+ function status(){return tS==='docked'?'قطارِ «'+DEST[dest]+'» وایساده. '+fmt(tT)+' تا حرکت.':tS==='away'?'قطارِ «'+DEST[dest]+'»: '+fmt(tT)+' تا رسیدن.':tS==='arriving'?'قطار داره می‌رسه…':'قطار داره می‌ره…'}
+ // suitcase UI
+ function renderSuit(){const u=used();$('sBar').style.width=Math.min(100,u)+'%';$('sBar').style.background=u>100?'#b5383a':'#3fa796';$('sPct').textContent=fd(u)+'٪ پُر';
+  $('sItems').innerHTML=IT.map(t=>'<div class="it'+(t.in?'':' out')+'"><div><b>'+t.n+'</b><span class="small">'+fd(t.v)+'٪ جا'+(!t.in&&t.tag?' · برچسبش: <b class="tg">«'+t.tag+'»</b>':!t.in?' · بیرونه':'')+'</span></div><button class="btn alt" data-t="'+t.i+'"'+(closed?' disabled':'')+'>'+(t.in?'بذار بیرون':'بذار توش')+'</button></div>').join('');
+  $('sFold').disabled=closed||folding>0;$('sFold').textContent=folding>0?'داری با دقت تا می‌کنی…':'دقیق‌تر تا کن';$('sClose').textContent=closed?'بازش کن':'درِ چمدون رو ببند';$('sTime').textContent=status()}
+ $('sItems').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b||closed)return;const t=IT[+b.dataset.t];t.in=!t.in;extras.forEach((m,i)=>m.visible=!IT[5+i].in);renderSuit()};
+ $('sFold').onclick=()=>{if(closed||folding)return;folding=2.4;$('sMsg').textContent='';renderSuit()};
+ $('sClose').onclick=()=>{if(closed){closed=false;carried.visible=false;suit.visible=true;renderSuit();return}const u=used();if(u>100){$('sMsg').textContent='درش بسته نمی‌شه. '+fd(u-100)+'٪ زیادیه.';const el=$('sBarW');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');return}
+  closed=true;carried.visible=true;suit.visible=false;beep([392,523]);show(null);toast(IT.some(t=>!t.in)?'چمدون بسته شد. ناقصه، ولی بسته‌ست.':'چمدون بسته شد.')};
+ // password UI
+ let pw=[];
+ function renderPass(){const tags=IT.filter(t=>t.tag&&!t.in).map(t=>t.tag);$('pSlots').innerHTML=[0,1,2].map(i=>'<span>'+(pw[i]||'')+'</span>').join('');
+  $('pBank').innerHTML=tags.length?tags.map(t=>'<button class="pw" data-w="'+t+'"'+(pw.includes(t)?' disabled':'')+'>'+t+'</button>').join(''):'<p class="small">هنوز هیچ کلمه‌ای نداری.</p>'}
+ $('pBank').onclick=e=>{const b=e.target.closest('.pw');if(!b||b.disabled||pw.length>=3)return;pw.push(b.dataset.w);renderPass()};
+ $('pDel').onclick=()=>{pw.pop();renderPass()};
+ $('pGo').onclick=()=>{if(pw.join(' ')==='شروع، آماده‌ت می‌کنه'){boardOK=true;show(null);mood(true);beep([523,659,784]);toast(tS==='docked'?'مأمور: «بفرما، سوار شو!»':'مأمور: «بفرما. قطار که اومد، سوار شو.»',3200)}
+  else{const el=$('pSlots');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');$('pMsg').textContent=IT.filter(t=>t.tag&&!t.in).length<3?'مأمور: «رمز سه تا کلمه‌ست. یه چیزایی هنوز تو چمدونته که نباید باشه.»':'مأمور: «نه، این‌جوری نه.»'}};
+ const inter=[
+  {pos:{x:BN.x,z:BN.z-.85},r:.45,top:1.4,meshes:[],label:()=>closed?'چمدون رو باز کن':'چمدون رو ببند',info:()=>null,focus:()=>({x:BN.x-.1,y:.6,z:BN.z,az:.25,el:.6,d:2.9}),act(){$('sMsg').textContent='';renderSuit();show('ovSuit')}},
+  {pos:{x:CD.x,z:CD.z+.7},r:.4,top:2.1,meshes:[],label:()=>boardOK?null:'با مأمور حرف بزن',info:()=>boardOK?null:'مأمورِ قطار: «رمزِ سوار شدن رو بلدی؟»',focus:()=>boardOK?null:{x:CD.x,y:1.2,z:CD.z,az:.2,el:.18,d:3},act(){if(!closed){toast('مأمور: «اول چمدونت رو ببند. با چمدونِ باز که نمی‌شه سوار شد.»',3000);return}pw=[];$('pMsg').textContent='';renderPass();show('ovPass')}}];
+ return{g,title:'',sub,
+  hints:['قطار منتظرت نمی‌مونه. لازم نیست چمدون رو کامل ببندی؛ فقط باید بسته بشه.','بعضی وسایل فقط واسه بی‌نقص بودنن: اتو، کتابِ آمادگی، کتِ «شاید لازم شد». جاشون بذار و برچسب‌هاشون رو بخون.','سه برچسب: «شروع،» «آماده‌ت» «می‌کنه». به مأمور بگو: شروع، آماده‌ت می‌کنه. بعد که قطار اومد، سوار شو.'],
+  get win(){return['سوار شدی. کلیدِ ۴: قانونِ ۸۰٪','کمال‌گرا فکر می‌کنه باید اول کاملاً آماده بشه، بعد شروع کنه. ولی آمادگیِ کامل هیچ‌وقت نمی‌رسه؛ فقط قطارها می‌رن'+(missed?' (تو '+fd(missed)+' تا قطار رو از دست دادی)':'')+'. چمدونت ناقص بود و باز هم رسیدی. آمادگی توی راه ساخته می‌شه: شروع، آماده‌ت می‌کنه.']},
+  gate:()=>boardOK&&tS==='docked'&&doorK>.8,
+  obs:()=>[{x:BN.x,z:BN.z,hx:.92,hz:.3},{x:CD.x,z:CD.z,hx:.3,hz:.3},{x:-3.4,z:-3.6,hx:.08,hz:.08},{x:-1.0,z:-3.6,hx:.08,hz:.08},{x:-4,z:-2.6,hx:.1,hz:.1},{x:4,z:-2.6,hx:.1,hz:.1},{x:-4,z:2.6,hx:.1,hz:.1}],inter,
+  update(dt){tT-=dt;
+   if(tS==='away'){train.position.x=26;head.intensity=0;if(tT<=0){tS='arriving';tT=3.2}}
+   else if(tS==='arriving'){const k=Math.max(0,tT/3.2);train.position.x=26*k*k;head.intensity=1.2;if(tT<=0){tS='docked';tT=14;beep([660,520])}}
+   else if(tS==='docked'){train.position.x=0;if(tT<=0){tS='leaving';tT=3}}
+   else if(tS==='leaving'){const k=1-Math.max(0,tT/3);train.position.x=-34*k*k;if(tT<=0){tS='away';tT=18;if(dest<3){toast('قطارِ «'+DEST[dest]+'» رفت.',2600);missed++;dest++}else{missed++}}}
+   const open=tS==='docked'&&tT>1.2;doorK+=((open?1:0)-doorK)*Math.min(1,dt*5);dL.position.x=-.3-doorK*.58;dR.position.x=.3+doorK*.58;inside.visible=doorK>.05;
+   if(folding>0){folding-=dt;if(folding<=0){folding=0;fold=Math.min(.13,fold+.06/Math.pow(2,foldN++));$('sMsg').textContent=fold<.08?'یه کم جا باز شد… تقریباً بی‌نقصه!':'باز هم یه ذره جا شد. شاید مشکل تا کردن نیست.';if($('ovSuit').classList.contains('show'))renderSuit()}}
+   if($('ovSuit').classList.contains('show'))$('sTime').textContent=status();
+   $('objS').textContent=sub+' '+status();drawBoard()},
+  dispose(){northG.visible=true;scene.background=oldBg;scene.fog.color=oldBg.clone();H.body.remove(carried)}}}
+
+/* level 7: behind the mask */
+function buildR5(){const g=new THREE.Group(),dark=M('#2f2c2a');
+ const MS=[
+  {x:-3.8,c:'#c9a24a',e:'«من زیرِ فشار بهتر کار می‌کنم.»',n:'دلیل‌تراشی',d:'یه دلیلِ منطقی‌نما برای کاری که از ترس انجامش ندادی.'},
+  {x:-2.2,c:'#8a3b3b',e:'«تقصیرِ مدیرمه که همه‌چی رو دقیقه‌ی ۹۰ می‌گه.»',n:'فرافکنی',d:'انداختنِ تقصیر گردنِ آدم‌ها و شرایط.'},
+  {x:0,c:'#e9e4da',e:'«امروز نمی‌تونم. تب دارم و دکتر گفته استراحت کنم.»',n:'',d:'این بهانه نیست؛ یه دلیلِ واقعیه.'},
+  {x:2.2,c:'#4f6b7a',e:'«هنوز کلی وقت هست. چیزی نمی‌شه.»',n:'انکار',d:'ندیدنِ مشکلی که درست جلوی چشمته.'},
+  {x:3.8,c:'#5d6b4f',e:'«اول باید یه دوره‌ی دیگه ببینم تا کامل بفهمم.»',n:'عقلانی‌سازی',d:'فکر و تحقیقِ بی‌پایان، به‌جای انجام دادن.'}];
+ const MZ=-1.0;
+ // tall backdrop on the north side, left and right of the door
+ [-2.95,2.95].forEach(x=>g.add(mesh(new THREE.BoxGeometry(4.1,2.5,.12),M('#17181c',{roughness:1}),x,1.25,-3.92)));
+ MS.forEach((m,i)=>{const grp=new THREE.Group();grp.position.set(m.x,0,MZ);grp.rotation.y=Math.PI;g.add(grp);m.g=grp;
+  grp.add(mesh(new THREE.CylinderGeometry(.045,.06,1.35,10),dark,0,.68,-.05),mesh(new THREE.CylinderGeometry(.22,.26,.05,16),dark,0,.025,-.05));
+  const face=new THREE.Group();face.position.y=1.62;grp.add(face);m.face=face;
+  const fm=mesh(new THREE.SphereGeometry(1,28,20),M(m.c,{roughness:.45,metalness:.25}));fm.scale.set(.34,.44,.13);face.add(fm);
+  const holeM=new THREE.MeshBasicMaterial({color:'#0c0c0f'});[-1,1].forEach(s=>{[.125,-.125].forEach(z=>{const h=mesh(new THREE.SphereGeometry(1,16,10),holeM,s*.12,.08,z,false,false);h.scale.set(.075,.04,.02);face.add(h)})});
+  const mo=mesh(new THREE.TorusGeometry(.08,.012,6,16,Math.PI),holeM,0,-.17,.128,false,false);mo.rotation.z=i===2?Math.PI:0;face.add(mo);
+  const pl=new THREE.Mesh(new THREE.PlaneGeometry(.9,.5),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#e9e1d2';x.fillRect(0,0,w,h);x.strokeStyle='#6e5134';x.lineWidth=8;x.strokeRect(4,4,w-8,h-8);wrap(x,m.e,24,52,w,'#2a2428',34)},256,142)}));pl.position.set(0,.98,.02);grp.add(pl);
+  const pj=new THREE.Mesh(new THREE.PlaneGeometry(1.7,.75),new THREE.MeshBasicMaterial({transparent:true,map:tex((x,w,h)=>{x.shadowColor='#ff9d2e';x.shadowBlur=10;txt(x,m.n||'دلیلِ واقعی',m.n?60:44,60,w,'#fff1d6');x.shadowBlur=0;wrap(x,m.d,22,124,w,'#ffe2b0',30)},400,176)}));
+  pj.position.set(m.x,i===2?2.05:1.7,i===2?-4.07:-3.85);pj.visible=false;g.add(pj);m.pj=pj;m.seen=false});
+ // lore: family photos
+ const LB={x:-4.72,z:2.0};g.add(mesh(new THREE.BoxGeometry(.06,.8,1.3),M('#a7865f'),LB.x,1.35,LB.z),mesh(new THREE.BoxGeometry(.06,1.0,.06),dark,LB.x,.5,LB.z));
+ ['#8f7d6a','#6f7d86','#86706f'].forEach((c,i)=>{const f=mesh(new THREE.BoxGeometry(.03,.42,.32),M(c),LB.x+.04,1.35,LB.z-.4+i*.4,false,false);g.add(f)});
+ // door plaque
+ const plaque=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.4),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#2b2622';x.fillRect(0,0,w,h);txt(x,'پشتِ هر بهانه یه',17,24,w,'#c9b48a',600);for(let i=0;i<4;i++){x.strokeStyle='#e8a33d';x.lineWidth=2.5;x.strokeRect(70+i*30,44,24,30)}txt(x,'هست.',17,90,w,'#c9b48a',600)},256,104)}));plaque.position.set(.7,1.3,.065);hinge.add(plaque);
+ // eye view
+ let eyeOn=null,fallT=-1;
+ function look(m,it){eyeOn={m,it};m.face.visible=false;m.pj.visible=true;focus=it;fOff={az:0,el:0,d:0};if(!m.seen){m.seen=true;beep(m.n?[392,523]:[330])}
+  $('eyeCap').innerHTML=m.n?'روی دیوار افتاد: <b>«'+m.n+'»</b>':'روی در افتاد: <b>این بهانه نیست؛ یه دلیلِ واقعیه.</b>';show('ovEye')}
+ const LET=['ع','و','ف','ر','ا','ن','د','ت','ک','ش','م','ل'];let pick=[];
+ function renderLet(){$('lSlots').innerHTML=[0,1,2,3].map(i=>'<span>'+(pick[i]!=null?LET[pick[i]]:'')+'</span>').join('');$('lBank').innerHTML=LET.map((l,i)=>'<button class="lt" data-i="'+i+'">'+l+'</button>').join('')}
+ $('lBank').onclick=e=>{const b=e.target.closest('.lt');if(!b||pick.length>=4)return;pick.push(+b.dataset.i);renderLet()};
+ $('lDel').onclick=()=>{pick.pop();renderLet()};
+ $('lGo').onclick=()=>{if(pick.map(i=>LET[i]).join('')==='دفاع'){show(null);fallT=0;openDoor('دفاع. نقاب‌ها افتادن و در باز شد.');return}
+  const el=$('lSlots');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');const seen=MS.filter(m=>m.seen&&m.n).length;$('lMsg').textContent=seen<4?'هنوز پشتِ همه‌ی نقاب‌ها رو ندیدی.':'نه، این نبود. حرفِ اولِ اسم‌ها رو بردار؛ یکی‌شون اصلاً اسم نداشت.'};
+ const inter=[];
+ MS.forEach(m=>{
+  inter.push({pos:{x:m.x,z:MZ-.75},r:.35,top:2.3,meshes:[],label:()=>'بهانه رو بخون',info:()=>'نقاب می‌گه: '+m.e,focus:()=>({x:m.x,y:1.3,z:MZ,az:Math.PI,el:.1,d:2.4}),act(){toast('نقاب می‌گه: '+m.e,2600)}});
+  const back={pos:{x:m.x,z:MZ+.75},r:.35,top:2.3,meshes:[],label:()=>'از سوراخِ چشمش نگاه کن',info:()=>m.seen?(m.n?'پشتِ این نقاب: «'+m.n+'»':'این یکی بهانه نبود.'):null,
+   focus:()=>eyeOn&&eyeOn.m===m?{x:m.x,y:1.65,z:m.pj.position.z,az:0,el:.02,d:Math.abs(m.pj.position.z-(MZ+.35))+1.6}:null,act(){look(m,back)}};inter.push(back)});
+ inter.push({pos:{x:LB.x+.75,z:LB.z},r:.4,top:2,meshes:[],label:()=>'عکس‌ها رو ببین',info:()=>null,focus:()=>({x:LB.x,y:1.35,z:LB.z,az:Math.PI/2,el:.12,d:2.3}),
+  act(){note('سه عکسِ خانوادگی','<ul><li><b>۱</b><span><b>محبت مساوی موفقیت بود.</b> حالا قبل از هر کارِ مهم فلج می‌شی، چون شکست یعنی دوست‌داشتنی نبودن.</span></li><li><b>۲</b><span><b>هیچ قانون و ساختاری نبود.</b> حالا کارهای باز رو گم می‌کنی و همه‌چی می‌رسه به دقیقه‌ی آخر.</span></li><li><b>۳</b><span><b>همه‌چی دستور بود.</b> حالا عقب انداختن یه جور شورشه: «کسی نمی‌تونه مجبورم کنه.»</span></li></ul><p class="small">هدف مقصر کردنِ پدر و مادر نیست؛ هدف شناختنِ الگوئه.</p>')}});
+ inter.push({pos:{x:0,z:-3.4},r:.4,top:2.6,meshes:[],label:()=>doorTarget?null:'قفلِ در',info:()=>doorTarget?null:'روی در نوشته: «پشتِ هر بهانه یه ▢▢▢▢ هست.»',focus:()=>doorTarget||eyeOn?null:{x:0,y:1.4,z:-4.1,az:0,el:.1,d:2.7},act(){pick=[];$('lMsg').textContent='چهار حرف.';renderLet();show('ovLet')}});
+ return{g,sub:'هر بهانه یه نقابه. ببین پشتش چیه.',
+  hints:['جلوی هر نقاب یه بهانه نوشته. ولی حقیقت پشتشه: برو پشتِ نقاب و از سوراخِ چشمش نگاه کن.','اسم‌هایی که روی دیوار افتادن رو ببین و حرفِ اولِ هر کدوم رو بردار. یکی از نقاب‌ها اصلاً بهانه نیست.','حرف‌ها: د، ف، ا، ع. رمزِ در: دفاع.'],
+  win:['نقاب‌ها افتادن. کلیدِ ۵: بهانه‌یاب','پشتِ هر بهانه یه دفاعه: ذهن داره از تصویری که از خودمون داریم محافظت می‌کنه، در برابرِ ترسِ شکست یا قضاوت شدن. اسمِ بهانه رو که بلد باشی، قدرتش کم می‌شه. ولی یادت باشه: هر دلیلی بهانه نیست؛ گاهی واقعاً تب داری.'],
+  obs:()=>MS.map(m=>({x:m.x,z:MZ,hx:.2,hz:.15})).concat([{x:-2.95,z:-3.92,hx:2.05,hz:.1},{x:2.95,z:-3.92,hx:2.05,hz:.1},{x:LB.x,z:LB.z,hx:.1,hz:.66}]),inter,
+  update(dt){if(eyeOn&&!$('ovEye').classList.contains('show')){eyeOn.m.face.visible=true;focusBlock=eyeOn.it;if(focus===eyeOn.it)focus=null;eyeOn=null}
+   if(fallT>=0&&fallT<2){fallT+=dt;MS.forEach((m,i)=>{const k=Math.min(1,Math.max(0,fallT*1.5-i*.12));m.face.rotation.x=k*1.3;m.face.position.y=1.62-k*k*1.45})}},
+  dispose(){hinge.remove(plaque)}}}
+
+/* generic word-chip lock */
+function chipLock(title,prompt,words,target,slots,onOk,fail){let pk=[];
+ const render=()=>{$('chS').innerHTML=Array.from({length:slots},(_,i)=>'<span>'+(pk[i]!=null?words[pk[i]]:'')+'</span>').join('');$('chB').innerHTML=words.map((w,i)=>'<button class="pw" data-i="'+i+'"'+(pk.includes(i)?' disabled':'')+'>'+w+'</button>').join('')};
+ $('chH').textContent=title;$('chP').textContent=prompt;$('chM').textContent='';render();
+ $('chB').onclick=e=>{const b=e.target.closest('.pw');if(!b||b.disabled||pk.length>=slots)return;pk.push(+b.dataset.i);render()};
+ $('chDel').onclick=()=>{pk.pop();render()};
+ $('chGo').onclick=()=>{if(pk.map(i=>words[i]).join(' ')===target){show(null);onOk();return}const el=$('chS');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');$('chM').textContent=fail};
+ show('ovChip')}
+
+/* level 8: rewire the Skinner box */
+function buildR6(){const g=new THREE.Group(),dark=M('#2f2c2a'),metal=M('#6a6d73',{roughness:.45,metalness:.5});
+ // lever station
+ const LV8={x:-3.6,z:-1.2};g.add(mesh(new THREE.BoxGeometry(.7,1.0,.7),metal,LV8.x,.5,LV8.z));
+ const arm=new THREE.Group();arm.position.set(LV8.x,1.0,LV8.z);g.add(arm);const a1=mesh(new THREE.CylinderGeometry(.035,.035,.7,8),M('#2b2c30'),0,.35,0);arm.add(a1,mesh(new THREE.SphereGeometry(.09,16,12),M('#c9413a',{roughness:.3}),0,.72,0));arm.rotation.x=.5;
+ const tray=mesh(new THREE.BoxGeometry(.4,.08,.4),M('#b08a4a',{metalness:.5,roughness:.4}),LV8.x+.5,.55,LV8.z);g.add(tray);
+ const coins=mesh(new THREE.CylinderGeometry(.14,.16,.02,16),M('#e3b341',{metalness:.6,roughness:.3}),LV8.x+.5,.6,LV8.z);coins.scale.y=.5;g.add(coins);
+ const scr=mesh(new THREE.PlaneGeometry(.7,.45),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#14161c';x.fillRect(0,0,w,h);x.fillStyle='#ff3b5c';x.beginPath();x.arc(w/2,h/2-8,42,0,7);x.fill();txt(x,'۹+',44,h/2-6,w,'#ffffff');txt(x,'یه چیزی منتظرته…',18,h-20,w,'#c9cbd1',600)},256,164),emissive:new THREE.Color('#ff6b7d'),emissiveIntensity:.2}),LV8.x,1.75,LV8.z+.0);scr.rotation.y=Math.PI/2;g.add(scr,mesh(new THREE.BoxGeometry(.05,.8,.05),dark,LV8.x,1.3,LV8.z));
+ const glass=mesh(new THREE.BoxGeometry(1.2,1.9,1.1),new THREE.MeshStandardMaterial({color:'#cfe8f5',transparent:true,opacity:.22,roughness:.1,metalness:.1,depthWrite:false}),LV8.x+.1,.95,LV8.z,false,false);glass.visible=false;g.add(glass);
+ // desk
+ const DK8={x:3.2,z:-1.6};g.add(mesh(new THREE.BoxGeometry(2.0,.08,.9),M('#7a6048'),DK8.x,.78,DK8.z));[[-.9,-.38],[.9,-.38],[-.9,.38],[.9,.38]].forEach(o=>g.add(mesh(new THREE.BoxGeometry(.07,.76,.07),dark,DK8.x+o[0],.38,DK8.z+o[1])));
+ const mon=mesh(new THREE.PlaneGeometry(.9,.55),new THREE.MeshBasicMaterial({color:'#ffffff'}),DK8.x,1.25,DK8.z-.25,false,false);g.add(mon,mesh(new THREE.BoxGeometry(.96,.62,.04),M('#1d1f24'),DK8.x,1.25,DK8.z-.28),mesh(new THREE.BoxGeometry(.06,.3,.06),M('#1d1f24'),DK8.x,.95,DK8.z-.28));
+ const pipe=mesh(new THREE.CylinderGeometry(.04,.04,7.0,8),M('#b08a4a',{metalness:.5,roughness:.4}),(LV8.x+DK8.x)/2,.06,-1.4,false,false);pipe.rotation.z=Math.PI/2;pipe.visible=false;g.add(pipe);
+ const lampR=mesh(new THREE.SphereGeometry(.07,12,10),new THREE.MeshStandardMaterial({color:'#e3b341',emissive:new THREE.Color('#ffcf5a'),emissiveIntensity:0}),DK8.x+.75,.88,DK8.z-.2);lampR.visible=false;g.add(lampR);
+ const bell=new THREE.Group();bell.position.set(DK8.x-.7,.82,DK8.z+.1);bell.add(mesh(new THREE.ConeGeometry(.09,.12,16),M('#c9a24a',{metalness:.6,roughness:.3}),0,.06,0),mesh(new THREE.BoxGeometry(.16,.2,.02),M('#e9e1d2'),.2,.1,-.05));bell.visible=false;g.add(bell);
+ // fuse boxes
+ const SW=[{k:'hard',x:-1.6,z:3.95,ry:Math.PI,lab:'سختش کن',t:'اهرم رفت پشتِ شیشه. حالا اگه بخوای بکشیش، باید اول درِ شیشه رو باز کنی؛ همین یه ذره سختی کافیه.'},
+  {k:'sweet',x:4.95,z:.8,ry:-Math.PI/2,lab:'شیرینش کن',t:'دستگاهِ سکه وصل شد به میزِ کار. از این به بعد، بعد از هر صفحه یه پاداش می‌گیری: اول این، بعد اون.'},
+  {k:'near',x:-2.6,z:-3.95,ry:0,lab:'نزدیکش کن',t:'ددلاین شد امروز ساعتِ ۶. به سارا قول دادی گزارش رو براش بفرستی و اون منتظره.'}];
+ const on={hard:0,sweet:0,near:0};
+ SW.forEach(s=>{const grp=new THREE.Group();grp.position.set(s.x,0,s.z);grp.rotation.y=s.ry;g.add(grp);grp.add(mesh(new THREE.BoxGeometry(.42,.55,.12),M('#9aa0a8',{metalness:.4,roughness:.5}),0,1.25,0));
+  const h=mesh(new THREE.BoxGeometry(.06,.22,.06),M('#c9413a'),0,1.25,.08);h.rotation.x=.5;grp.add(h);s.h=h;
+  const pl=new THREE.Mesh(new THREE.PlaneGeometry(.5,.18),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#16171a';x.fillRect(0,0,w,h);txt(x,s.lab,30,h/2+2,w,'#e8a33d')},256,92)}));pl.position.set(0,.86,.065);pl.visible=false;grp.add(pl);s.pl=pl});
+ const plaque=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.36),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#2b2622';x.fillRect(0,0,w,h);txt(x,'قانونِ اسکینر:',17,24,w,'#c9b48a',600);txt(x,'کارِ بد رو … ، کارِ خوب رو …',17,64,w,'#c9b48a',600)},256,92)}));plaque.position.set(.7,1.45,.065);hinge.add(plaque);
+ let page=0,energy=100,typing=0,intAt=0,ring=0,done8=false,mKey='';
+ const R8=['دینگ! ۱۲ تا لایکِ جدید.','یه ریلزِ خنده‌دار. فقط یکی دیگه…','هیچی. شاید دفعه‌ی بعد…','دینگ! یکی تو رو تگ کرده.','هیچی. یه بار دیگه بکش…','دینگ! یه پیام از گروهِ فامیل.'];let rI=0;
+ const sub='یه گزارشِ پنج صفحه‌ای باید امروز تموم بشه.';
+ function drawMon(){const k=page+'|'+Math.round(energy)+'|'+(typing>0?Math.round((3-typing)*10):'x');if(k===mKey)return;mKey=k;mon.material.map=tex((x,w,h)=>{x.fillStyle='#f4f2ef';x.fillRect(0,0,w,h);txt(x,'گزارشِ پروژه',24,30,w,'#16171a');txt(x,'صفحه‌ی '+fd(Math.min(page+1,5))+' از ۵',20,66,w,'#4a4e57',600);
+  x.fillStyle='#dcd8d2';x.fillRect(30,90,w-60,14);x.fillStyle='#3fa796';x.fillRect(30,90,(w-60)*(page/5),14);if(typing>0){x.fillStyle='#e8a33d';x.fillRect(30,112,(w-60)*Math.min(1,(3-typing)/3),8)}
+  txt(x,done8?'فرستاده شد ✓':'انرژی: '+fd(Math.round(energy))+'٪',18,140,w,energy<40&&!done8?'#b5383a':'#4a4e57',600)},256,156);mon.material.needsUpdate=true}
+ drawMon();
+ function flip(s){on[s.k]=1;s.pl.visible=true;beep([440,660]);note('کلیدِ «'+s.lab+'»','<p>'+s.t+'</p>');
+  if(s.k==='hard')glass.visible=true;if(s.k==='sweet'){pipe.visible=true;lampR.visible=true;energy=100}if(s.k==='near')bell.visible=true}
+ const inter=[
+  {pos:{x:LV8.x+.75,z:LV8.z},r:.45,top:2.2,meshes:[],label:()=>on.hard?null:'اهرم رو بکش',info:()=>on.hard?'اهرم پشتِ شیشه‌ست.':'یه اهرمِ براق. هر بار بکشیش، شاید یه چیزی بده.',focus:()=>({x:LV8.x,y:1.2,z:LV8.z,az:Math.PI/2,el:.35,d:3.2}),
+   act(){arm.rotation.x=-.6;const r=R8[rI++%R8.length];if(!r.startsWith('هیچی')){coins.scale.y+=.8;coins.position.y+=.008;beep([880,1175])}else beep([220]);toast(r+' (کار هنوز همون‌جاست.)',2200)}},
+  {pos:{x:DK8.x,z:DK8.z+.8},r:.45,top:1.9,meshes:[mon],label:()=>done8||typing>0?null:'یه صفحه بنویس',info:()=>typing>0?'داری می‌نویسی…':null,focus:()=>({x:DK8.x,y:1.05,z:DK8.z,az:.35,el:.32,d:2.8}),
+   act(){if(!on.near){toast('ددلاینِ این گزارش سه هفته‌ی دیگه‌ست… حالا کو تا اون موقع. (هیچ حسی برای شروع نداری.)',3200);return}if(energy<40){toast('دیگه نمی‌کشم. این همه کار و هیچ پاداشی…',2800);return}typing=3;intAt=on.hard?-1:1.7}},
+  {pos:{x:0,z:-3.4},r:.4,top:2.6,meshes:[],label:()=>doorTarget?null:'قفلِ در',info:()=>doorTarget?null:'روی در: «قانونِ اسکینر: کارِ بد رو … ، کارِ خوب رو …»',focus:()=>doorTarget?null:{x:0,y:1.4,z:-4.1,az:0,el:.1,d:2.7},
+   act(){if(!done8){toast('درِ خروج به گزارش وصله. اول گزارش رو بفرست.',2600);return}chipLock('قفلِ در','قانونِ اسکینر، توی چهار کلمه:',['کن','شیرینش','آسونش','کن،','تلخش','سختش'],'سختش کن، شیرینش کن',4,()=>openDoor('در باز شد. سختش کن، شیرینش کن.'),'نه، این نبود. اسمِ کلیدهای برق رو یادته؟')}}];
+ SW.forEach(s=>{const nx=Math.sin(s.ry),nz=Math.cos(s.ry);inter.push({pos:{x:s.x+nx*.7,z:s.z+nz*.7},r:.35,top:1.9,meshes:[],label:()=>on[s.k]?null:'کلیدِ برق رو بزن',info:()=>on[s.k]?'«'+s.lab+'»':'یه جعبه‌کلیدِ برق. معلوم نیست به چی وصله.',focus:()=>({x:s.x,y:1.1,z:s.z,az:s.ry,el:.2,d:2.2}),act(){flip(s)}})});
+ return{g,sub,
+  hints:['میز رو امتحان کن و ببین چی می‌گه. سه تا جعبه‌کلیدِ برق توی اتاق قایم شده؛ پیداشون کن.','هر کلید یه مشکل رو حل می‌کنه: ددلاینی که خیلی دوره، اهرمی که حواست رو پرت می‌کنه، و کاری که هیچ پاداشی نداره.','هر سه کلید رو بزن و پنج صفحه رو بنویس. رمزِ در: سختش کن، شیرینش کن.'],
+  win:['گزارش رفت. کلیدِ ۶: قانونِ اسکینر','مغزمون برای اهمال‌کاری جایزه می‌گیره: اهرمِ گوشی همین الان لذت می‌ده، ولی ضررِ عقب انداختن هفته‌ها بعد میاد. اسکینر می‌گه رفتار رو با اراده عوض نکن، با سیم‌کشی عوضش کن: کارِ بد رو سخت کن، کارِ خوب رو شیرین، و تنبیه رو بیار جلوی چشم.'],
+  obs:()=>[{x:LV8.x,z:LV8.z,hx:.4,hz:.4},{x:DK8.x,z:DK8.z,hx:1.05,hz:.5}],inter,
+  update(dt){arm.rotation.x+=(.5-arm.rotation.x)*Math.min(1,dt*3);
+   if(!on.hard){ring=Math.max(0,ring-dt);scr.material.emissiveIntensity=.2+ring*.8+.1*Math.sin(clock*3)}else scr.material.emissiveIntensity=.05;
+   if(typing>0){const prev=typing;typing-=dt;if(intAt>0&&prev>3-intAt&&typing<=3-intAt){typing=0;ring=1;beep([988,1319]);toast('دینگ! یه نوتیفیکیشن اومد و حواست پرت شد. صفحه نصفه موند.',2600)}
+    else if(typing<=0){typing=0;page++;energy-=40;if(on.sweet){energy+=40;lampR.material.emissiveIntensity=1.4;coins.scale.y+=.8;beep([784,1046]);toast(page<5?'یه صفحه تموم شد و دستگاه یه پاداش داد.':'گزارش تموم شد و فرستاده شد! حالا برو سراغِ در.',2400)}else toast(page<5?'یه صفحه تموم شد… ولی هیچ حسی نداشت.':'گزارش تموم شد!',2400);if(page>=5){done8=true;mood(true)}}}
+   lampR.material.emissiveIntensity=Math.max(0,lampR.material.emissiveIntensity-dt);
+   $('objS').textContent=sub+' صفحه‌ها: '+fd(page)+' از ۵ · انرژی: '+fd(Math.round(energy))+'٪';drawMon()},
+  dispose(){hinge.remove(plaque)}}}
+
+/* level 9: the night before the exam */
+function buildR7(){const g=new THREE.Group(),dark=M('#2f2c2a'),wd=M('#7a6048');
+ let split=false,photo=false,tv=true,phone=true,mini=false,view=30,reached=false,stressShown=false;
+ const E=()=>split?2:1,V=()=>photo?2:1,I=()=>1+(tv?1.5:0)+(phone?1.5:0),D=d=>mini?Math.min(d,10):d,Mv=d=>E()*V()/(I()*D(d)),LINE=.25;
+ // gauge
+ const GA={x:-2.4,z:-3.55};g.add(mesh(new THREE.BoxGeometry(.06,1.2,.06),dark,GA.x,.6,GA.z));
+ const face=new THREE.Mesh(new THREE.CircleGeometry(.62,40),new THREE.MeshBasicMaterial({map:tex((x,w,h)=>{x.fillStyle='#f4efe6';x.beginPath();x.arc(w/2,h/2,w/2-2,0,7);x.fill();x.lineWidth=18;[['#b5383a',Math.PI*1.12,Math.PI*1.45],['#e8a33d',Math.PI*1.45,Math.PI*1.66],['#3fa796',Math.PI*1.66,Math.PI*1.88]].forEach(a=>{x.strokeStyle=a[0];x.beginPath();x.arc(w/2,h/2,w/2-40,a[1],a[2]);x.stroke()});txt(x,'انگیزه‌سنج',24,h/2+60,w,'#2a2428');txt(x,'خطِ شروع ←',16,52,w*1.25,'#2a2428',600)},256,256)}));face.position.set(GA.x,1.65,GA.z+.04);g.add(face,mesh(new THREE.CylinderGeometry(.66,.66,.06,40),dark,GA.x,1.65,GA.z-.01));g.children[g.children.length-1].rotation.x=Math.PI/2;
+ const ang=v=>{const t=Math.max(0,Math.min(1,(Math.log10(Math.max(v,1e-4))+2.2)/2.2));return 1.25-t*2.5};
+ const tick=mesh(new THREE.BoxGeometry(.03,.2,.01),M('#16171a'),0,0,0,false,false);const tg=new THREE.Group();tg.position.set(GA.x,1.65,GA.z+.06);tg.rotation.z=ang(LINE);tick.position.y=.45;tg.add(tick);g.add(tg);
+ const ndl=new THREE.Group();ndl.position.set(GA.x,1.65,GA.z+.08);g.add(ndl);ndl.add(mesh(new THREE.BoxGeometry(.025,.5,.015),M('#c9413a'),0,.22,0,false,false),mesh(new THREE.CylinderGeometry(.05,.05,.03,16),M('#16171a'),0,0,0,false,false));ndl.children[1].rotation.x=Math.PI/2;
+ const stamp=new THREE.Mesh(new THREE.PlaneGeometry(.9,.2),new THREE.MeshBasicMaterial({transparent:true,map:tex((x,w,h)=>{txt(x,'انگیزه ساختنیه',34,h/2+2,w,'#3fa796')},256,58)}));stamp.position.set(GA.x,.92,GA.z+.05);stamp.visible=false;g.add(stamp);
+ // calendar on the west wall
+ const CA={x:-4.78,z:-1.0};const cal=mesh(new THREE.PlaneGeometry(1.1,1.2),new THREE.MeshBasicMaterial({color:'#ffffff'}),CA.x+.04,1.4,CA.z,false,false);cal.rotation.y=Math.PI/2;g.add(cal,mesh(new THREE.BoxGeometry(.05,1.3,1.2),dark,CA.x,1.4,CA.z),mesh(new THREE.BoxGeometry(.06,.9,.06),dark,CA.x,.45,CA.z));let cKey='';
+ function drawCal(){const k=view+'|'+mini;if(k===cKey)return;cKey=k;cal.material.map=tex((x,w,h)=>{x.fillStyle='#f4efe6';x.fillRect(0,0,w,h);x.fillStyle='#b5383a';x.fillRect(0,0,w,46);txt(x,view===30?'امروز':'سفر در زمان',22,24,w,'#ffffff');txt(x,fd(view),110,140,w,'#16171a');txt(x,'روز تا امتحان',22,218,w,'#4a4e57',600)},220,256);cal.material.needsUpdate=true}
+ drawCal();
+ // desk with the book
+ const DK9={x:1.8,z:-.8};g.add(mesh(new THREE.BoxGeometry(1.8,.08,.9),wd,DK9.x,.78,DK9.z));[[-.8,-.38],[.8,-.38],[-.8,.38],[.8,.38]].forEach(o=>g.add(mesh(new THREE.BoxGeometry(.07,.76,.07),dark,DK9.x+o[0],.38,DK9.z+o[1])));
+ const book=mesh(new THREE.BoxGeometry(.55,.32,.4),M('#2f5d7a'),DK9.x-.3,.98,DK9.z,true,true);g.add(book);
+ const lets=Array.from({length:10},(_,i)=>{const m=mesh(new THREE.BoxGeometry(.3,.025,.4),M(['#2f5d7a','#4f7262','#8a5a4e'][i%3]),DK9.x-.45+(i%5)*.12,.83+Math.floor(i/5)*.03,DK9.z+(i<5?-.08:.18),true,true);m.visible=false;g.add(m);return m});
+ const frame=mesh(new THREE.BoxGeometry(.22,.28,.03),M('#e9e1d2'),DK9.x+.55,.97,DK9.z-.25);frame.rotation.y=-.3;frame.visible=false;g.add(frame);
+ g.add(mesh(new THREE.CylinderGeometry(.03,.03,.45,8),dark,DK9.x+.7,1.05,DK9.z+.2),mesh(new THREE.ConeGeometry(.14,.14,16,1,true),M('#e9dcc2',{emissive:new THREE.Color('#ffd7a0'),emissiveIntensity:.5}),DK9.x+.7,1.3,DK9.z+.2));
+ // backpack
+ const BP={x:-3.3,z:2.8};const bp=mesh(new THREE.SphereGeometry(1,18,14),M('#55606b'),BP.x,.3,BP.z);bp.scale.set(.32,.32,.22);g.add(bp);
+ // TV
+ const TVp={x:4.75,z:2.1};g.add(mesh(new THREE.BoxGeometry(.5,.5,1.4),dark,TVp.x,.25,TVp.z),mesh(new THREE.BoxGeometry(.06,.75,1.25),M('#16171a'),TVp.x-.05,.9,TVp.z));
+ const tvS=mesh(new THREE.PlaneGeometry(1.15,.66),new THREE.MeshBasicMaterial({color:'#7fb7ff'}),TVp.x-.085,.9,TVp.z,false,false);tvS.rotation.y=-Math.PI/2;g.add(tvS);const tvL=new THREE.PointLight('#8fb8ff',.9,5);tvL.position.set(TVp.x-.6,1,TVp.z);g.add(tvL);
+ // bed + phone
+ const BD9={x:3.7,z:-3.0};g.add(mesh(new THREE.BoxGeometry(1.9,.4,1.0),M('#8a7f73'),BD9.x,.2,BD9.z),mesh(new THREE.BoxGeometry(.5,.12,.8),M('#e9e1d2'),BD9.x+.6,.46,BD9.z));
+ const ph=mesh(new THREE.BoxGeometry(.12,.02,.22),new THREE.MeshStandardMaterial({color:'#16171a',emissive:new THREE.Color('#ff6b7d'),emissiveIntensity:.6}),BD9.x-.3,.42,BD9.z);g.add(ph);
+ // whiteboard
+ const WB={x:-4.78,z:2.0};const wb=mesh(new THREE.PlaneGeometry(1.4,.9),new THREE.MeshBasicMaterial({color:'#ffffff'}),WB.x+.04,1.35,WB.z,false,false);wb.rotation.y=Math.PI/2;g.add(wb,mesh(new THREE.BoxGeometry(.05,1.0,1.5),M('#c9c5bf'),WB.x,1.35,WB.z),mesh(new THREE.BoxGeometry(.06,.85,.06),dark,WB.x,.43,WB.z));
+ const drawWB=()=>{wb.material.map=tex((x,w,h)=>{x.fillStyle='#fbfaf7';x.fillRect(0,0,w,h);if(mini){txt(x,'ددلاینِ نزدیک',24,40,w,'#b5383a');wrap(x,'خلاصه‌ی فصل‌های ۱ تا ۳ ← ۱۰ روز دیگه، تحویل به هم‌گروهی',20,92,w,'#16171a',30)}else txt(x,'(خالی)',20,h/2,w,'#b9b4ad',600)},256,164);wb.material.needsUpdate=true};drawWB();
+ const plaque=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.36),new THREE.MeshStandardMaterial({map:tex((x,w,h)=>{x.fillStyle='#2b2622';x.fillRect(0,0,w,h);txt(x,'به انگیزه‌سنج وصله',17,30,w,'#c9b48a',600);txt(x,'انگیزه ▢▢▢▢▢▢',19,66,w,'#e8a33d',600)},256,92)}));plaque.position.set(.7,1.45,.065);hinge.add(plaque);
+ const fml=d=>'انگیزه = ('+fd(E())+' × '+fd(V())+') ÷ ('+fd(I())+' × '+fd(D(d))+')';
+ const pct=d=>fd(Math.min(999,Math.round(Mv(d)/LINE*100)))+'٪ از خطِ شروع';
+ function act1(cond,f){if(cond)return;f();beep([523,659]);check()}
+ function check(){if(!reached&&Mv(30)>=LINE){reached=true;stamp.visible=true;mood(true);beep([523,659,784,1046]);toast('عقربه‌ی امروز رسید به خطِ شروع! زیرِ انگیزه‌سنج یه جمله ظاهر شد.',3600)}}
+ const sub='سی روز تا امتحان مونده.';
+ // calendar overlay
+ $('calR').oninput=()=>{view=+$('calR').value;$('calD').textContent=fd(view)+' روز تا امتحان';$('calF').textContent=fml(view);$('calV').textContent=pct(view);
+  if(view<=2&&!stressShown){stressShown=true;$('calV').textContent+=' · شبِ امتحان! عقربه رفت بالا… با یه عالمه استرس.'}else if(view<=2)$('calV').textContent+=' · با استرس'};
+ const inter=[
+  {pos:{x:GA.x,z:GA.z+.8},r:.4,top:2.5,meshes:[],label:()=>'انگیزه‌سنج رو نگاه کن',info:()=>fml(30)+' · '+pct(30),focus:()=>({x:GA.x,y:1.45,z:GA.z,az:0,el:.15,d:2.6}),act(){note('انگیزه‌سنج','<p><b>انگیزه = (انتظارِ موفقیت × ارزش) ÷ (تکانشگری × تأخیر)</b></p><p>امروز: '+fml(30)+'</p><p class="small">'+pct(30)+'. در فقط وقتی باز می‌شه که عقربه‌ی <b>امروز</b> به خطِ شروع برسه.</p>')}},
+  {pos:{x:CA.x+.75,z:CA.z},r:.4,top:2.3,meshes:[],label:()=>'چرخِ تقویم رو بچرخون',info:()=>null,focus:()=>({x:CA.x,y:1.4,z:CA.z,az:Math.PI/2,el:.12,d:2.4}),act(){$('calR').value=view;$('calR').oninput();show('ovCal')}},
+  {pos:{x:DK9.x-.3,z:DK9.z+.8},r:.4,top:1.6,meshes:[book],label:()=>split?null:'کتاب رو نگاه کن',info:()=>split?'۱۰ تا جزوه‌ی ۹۰ صفحه‌ای.':'یه کتابِ ۹۰۰ صفحه‌ای. فقط نگاه کردن بهش خسته‌ت می‌کنه.',focus:()=>({x:DK9.x,y:.95,z:DK9.z,az:.3,el:.5,d:2.6}),act(){act1(split,()=>{split=true;book.visible=false;lets.forEach(m=>m.visible=true);toast('کتابِ ۹۰۰ صفحه‌ای شد ۱۰ تا جزوه‌ی ۹۰ صفحه‌ای. «یه جزوه» شدنیه.',3000)})}},
+  {pos:{x:BP.x+.7,z:BP.z},r:.4,top:1.2,meshes:[bp],label:()=>photo?null:'کوله رو بگرد',info:()=>null,focus:()=>({x:BP.x,y:.4,z:BP.z,az:Math.PI/2,el:.55,d:2.2}),act(){act1(photo,()=>{photo=true;frame.visible=true;note('یه عکس توی جیبِ کوله','<p>عکسِ روزِ دفاعِ دوستت. پشتش با خودکار نوشته: <b>«سالِ دیگه نوبتِ توئه.»</b></p><p class="small">گذاشتیش روی میز، جلوی چشمت.</p>')})}},
+  {pos:{x:TVp.x-.8,z:TVp.z},r:.4,top:1.7,meshes:[tvS],label:()=>tv?'تلویزیون رو خاموش کن':null,info:()=>tv?'یه سریال داره پخش می‌شه. «فقط یه قسمتِ دیگه…»':null,focus:()=>({x:TVp.x,y:.9,z:TVp.z,az:-Math.PI/2,el:.2,d:2.6}),act(){act1(!tv,()=>{tv=false;tvS.material.color.set('#111214');tvL.intensity=0;toast('تلویزیون خاموش شد. اتاق یهو ساکت شد.')})}},
+  {pos:{x:BD9.x-.3,z:BD9.z+.9},r:.4,top:1.2,meshes:[ph],label:()=>phone?'گوشی رو بذار توی کشو':null,info:()=>phone?'گوشی هر چند ثانیه یه بار می‌لرزه.':null,focus:()=>({x:BD9.x,y:.5,z:BD9.z,az:.2,el:.6,d:2.6}),act(){act1(!phone,()=>{phone=false;ph.visible=false;toast('گوشی رفت توی کشو. دیگه نمی‌لرزه.')})}},
+  {pos:{x:WB.x+.75,z:WB.z},r:.4,top:2.2,meshes:[],label:()=>mini?null:'یه ددلاینِ نزدیک بنویس',info:()=>mini?null:'یه تخته‌ی خالی.',focus:()=>({x:WB.x,y:1.35,z:WB.z,az:Math.PI/2,el:.1,d:2.4}),act(){act1(mini,()=>{mini=true;drawWB();drawCal();toast('یه ددلاینِ نزدیک ساختی: ۱۰ روز دیگه، با یه نفر که منتظرته.',3000)})}},
+  {pos:{x:0,z:-3.4},r:.4,top:2.6,meshes:[],label:()=>doorTarget?null:'قفلِ در',info:()=>doorTarget?null:'روی در: «به انگیزه‌سنج وصله.»',focus:()=>doorTarget?null:{x:0,y:1.4,z:-4.1,az:0,el:.1,d:2.7},
+   act(){if(!reached){toast('درِ خروج به انگیزه‌سنج وصله. عقربه‌ی امروز هنوز به خطِ شروع نرسیده.',2800);return}chipLock('قفلِ در','زیرِ انگیزه‌سنج نوشته بود: انگیزه …',['جادوییه','ساختنیه','ذاتیه','انگیزه','شانسیه'],'انگیزه ساختنیه',2,()=>openDoor('در باز شد. انگیزه ساختنیه.'),'نه. انگیزه‌سنج چی نوشته بود؟')}}];
+ return{g,sub,
+  hints:['با چرخِ تقویم بازی کن و ببین شبِ امتحان عقربه چی‌کار می‌کنه. ولی در فقط با عقربه‌ی امروز باز می‌شه.','چهار عامل داری: کار رو کوچیک کن (کتاب)، دلیلت رو پیدا کن (کوله)، حواس‌پرتی‌ها رو قطع کن (تلویزیون و گوشی)، و یه ددلاینِ نزدیک بساز (تخته).','هر پنج کار رو انجام بده تا عقربه‌ی امروز به خطِ شروع برسه. رمز: انگیزه ساختنیه.'],
+  win:['کلیدِ ۷: چهار پیچِ انگیزه','شبِ امتحان جادو نیست؛ فقط تأخیر صفر شده، و برای همین با وحشت میاد. ولی بقیه‌ی پیچ‌ها رو خودت می‌تونی همین امروز بچرخونی: کار رو کوچیک کن تا باور کنی از پسش برمیای، دلیلت رو جلوی چشمت بذار، حواس‌پرتی‌ها رو قطع کن، و یه ددلاینِ نزدیک بساز. انگیزه منتظرت نمی‌مونه؛ ساختنیه.'],
+  obs:()=>[{x:GA.x,z:GA.z,hx:.1,hz:.1},{x:DK9.x,z:DK9.z,hx:.95,hz:.5},{x:TVp.x,z:TVp.z,hx:.3,hz:.72},{x:BD9.x,z:BD9.z,hx:1.0,hz:.55},{x:CA.x,z:CA.z,hx:.08,hz:.62},{x:WB.x,z:WB.z,hx:.08,hz:.76}],inter,
+  update(dt){const ov=$('ovCal').classList.contains('show');if(!ov&&view!==30){view=30}drawCal();
+   const v=Mv(view);ndl.rotation.z+=(ang(v)-ndl.rotation.z)*Math.min(1,dt*4)+(view<=2?Math.sin(clock*40)*.01:0);face.material.color.set(view<=2?'#ffb3b3':reached?'#c9f0dc':'#ffffff');
+   if(tv){tvL.intensity=.6+Math.random()*.6;tvS.material.color.setHSL(.6,.6,.45+Math.random()*.2)}if(phone){ph.position.x=BD9.x-.3+(Math.sin(clock*60)*.006)*(Math.sin(clock*1.3)>.6?1:0)}
+   $('objS').textContent=sub+' عقربه‌ی امروز: '+pct(30)+'.'},
+  dispose(){hinge.remove(plaque)}}}
+
+/* level 10: the storm becomes rain */
+function buildR8(){const g=new THREE.Group(),dark=M('#2f2c2a'),stone=M('#8d8a84',{roughness:.95});
+ const oldBg=scene.background.clone();const night=new THREE.Color('#101218'),dawn=new THREE.Color('#e7b48c');scene.background=night.clone();scene.fog.color=night.clone();
+ let S=.85,step=0,fleeT=0,fleeCd=0,underAwn=false,allowT=0,umb=true,roots={sack:0,suit:0,mask:0},sitT=-1,calm=false,dawnK=0,flashT=0;
+ // cloud
+ const cloud=new THREE.Group();scene.add(cloud);const cM=new THREE.MeshStandardMaterial({color:'#3a3d46',roughness:1});
+ [[0,0,0,.7],[.7,.1,.1,.55],[-.7,.05,-.1,.55],[.3,.35,-.2,.5],[-.35,.3,.2,.5],[.0,-.2,.35,.45],[1.2,-.1,0,.4],[-1.15,-.1,.05,.4]].forEach(c=>{const m=mesh(new THREE.SphereGeometry(c[3],18,14),cM,c[0],c[1],c[2],false,false);cloud.add(m)});
+ const cEyes=[-1,1].map(s=>{const e=mesh(new THREE.SphereGeometry(.07,10,8),new THREE.MeshBasicMaterial({color:'#0c0c0f'}),s*.22,.05,.62,false,false);cloud.add(e);return e});
+ cloud.position.set(0,3.2,2.8);
+ // rain particles
+ const NR=420,rp=new Float32Array(NR*6),rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.BufferAttribute(rp,3));
+ const rainM=new THREE.LineBasicMaterial({color:'#a9c4e6',transparent:true,opacity:.6});const rain=new THREE.LineSegments(rg,rainM);rain.frustumCulled=false;scene.add(rain);
+ const drops=Array.from({length:NR},()=>({x:(Math.random()-.5)*7,y:Math.random()*3.6,z:(Math.random()-.5)*7,v:6+Math.random()*3}));
+ const flash=new THREE.PointLight('#cfe0ff',0,30);flash.position.set(0,8,0);scene.add(flash);
+ // umbrella on Marshi
+ const um=new THREE.Group();um.add(mesh(new THREE.ConeGeometry(.75,.35,16,1,true),new THREE.MeshStandardMaterial({color:'#2f3a4f',side:THREE.DoubleSide,roughness:.7}),0,1.75,0),mesh(new THREE.CylinderGeometry(.015,.015,1.0,6),dark,.0,1.2,0));H.body.add(um);
+ // awning (a place to hide)
+ g.add(mesh(new THREE.BoxGeometry(1.8,.08,2.2),M('#5b4a42'),4.0,2.0,0),mesh(new THREE.BoxGeometry(.06,2,.06),dark,3.2,1,-1),mesh(new THREE.BoxGeometry(.06,2,.06),dark,3.2,1,1));
+ // phone on a bench
+ g.add(mesh(new THREE.BoxGeometry(1.4,.08,.45),M('#6b5242'),-3.8,.46,3.3),mesh(new THREE.BoxGeometry(.06,.44,.4),dark,-4.4,.22,3.3),mesh(new THREE.BoxGeometry(.06,.44,.4),dark,-3.2,.22,3.3));
+ const ph=mesh(new THREE.BoxGeometry(.12,.02,.22),new THREE.MeshStandardMaterial({color:'#16171a',emissive:new THREE.Color('#7fb7ff'),emissiveIntensity:.9}),-3.6,.51,3.3);g.add(ph);
+ // RAIN pillars
+ const PIL=[{k:'R',x:-3.0,z:-1.4,fa:'ببین',en:'Recognize'},{k:'A',x:0,z:.9,fa:'اجازه بده',en:'Allow'},{k:'I',x:3.0,z:-1.8,fa:'ریشه‌یابی کن',en:'Investigate'},{k:'N',x:-1.4,z:-2.6,fa:'نوازش کن',en:'Nurture'}];
+ PIL.forEach((p,i)=>{g.add(mesh(new THREE.CylinderGeometry(.28,.34,1.0,14),stone,p.x,.5,p.z));
+  p.mat=new THREE.MeshBasicMaterial({transparent:true,map:tex((x,w,h)=>{x.fillStyle='rgba(16,18,24,.85)';x.beginPath();x.arc(w/2,h/2,w/2-4,0,7);x.fill();x.fillStyle='#ffd27a';x.font='800 120px Georgia, serif';x.textAlign='center';x.textBaseline='middle';x.fillText(p.k,w/2,h/2+6)},192,192)});
+  const lp=new THREE.Mesh(new THREE.PlaneGeometry(.6,.6),p.mat);lp.position.set(p.x,1.42,p.z);g.add(lp);p.lp=lp});
+ // root objects from earlier rooms
+ const RO=[{k:'sack',x:-4.2,z:1.4,t:'کیسه‌ی شرم',r:'ترس از این‌که اگه شکست بخورم، یعنی آدمِ بی‌عرضه‌ای‌ام.'},{k:'suit',x:4.2,z:2.9,t:'چمدونِ نیمه‌بسته',r:'ترس از این‌که کارم به اندازه‌ی کافی خوب نباشه.'},{k:'mask',x:-1.2,z:3.5,t:'یه نقاب',r:'ترس از قضاوت شدن. بهانه‌ها فقط از این ترس محافظت می‌کردن.'}];
+ RO.forEach(o=>{if(o.k==='sack'){const s=mesh(new THREE.SphereGeometry(1,16,12),M('#4a4650'),o.x,.3,o.z);s.scale.set(.3,.3,.24);g.add(s)}else if(o.k==='suit')g.add(mesh(new THREE.BoxGeometry(.7,.24,.48),M('#7a3b33'),o.x,.12,o.z));else{const m=mesh(new THREE.SphereGeometry(1,16,12),M('#c9a24a',{metalness:.3,roughness:.4}),o.x,.08,o.z);m.scale.set(.3,.06,.38);g.add(m)}
+  o.glow=mesh(new THREE.CircleGeometry(.55,24),new THREE.MeshBasicMaterial({color:'#7fc4ff',transparent:true,opacity:0}),o.x,.012,o.z,false,false);o.glow.rotation.x=-Math.PI/2;g.add(o.glow)});
+ // rainbow
+ const bow=new THREE.Group();bow.position.set(0,0,-3.6);bow.visible=false;g.add(bow);['#ff6f61','#ffb347','#f5d000','#3fa796','#3a8fd8'].forEach((c,i)=>{const m=new THREE.Mesh(new THREE.TorusGeometry(3.2-i*.16,.07,8,48,Math.PI),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0}));bow.add(m)});
+ const sub='یه طوفان بالای سرته. فرار کردن بزرگ‌ترش می‌کنه.';
+ const stepTxt=()=>step<4?'قدمِ بعدی: '+PIL[step].k+' ('+PIL[step].fa+')':calm?'طوفان تموم شد. حالا برو سراغِ درِ قلعه.':'';
+ function grow(a,msg){S=Math.min(1,S+a);if(msg)toast(msg,2600)}
+ function stepDone(i,msg,newS){step=i+1;S=Math.min(S,newS);PIL[i].mat.color.set('#9be3c1');beep([523,659,784]);toast(msg,3800)}
+ // R: name the feeling
+ const FEEL=[['حسِ بد',0],['استرس',0],['ترس از این‌که قضاوتم کنن',1],['دلهره از این‌که کارم به اندازه‌ی کافی خوب نباشه',1],['خستگی از این‌که باز هم باید از صفر شروع کنم',1],['هیچی، خوبم',0]];
+ $('feelB').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;const f=FEEL[+b.dataset.i];if(f[1]){show(null);stepDone(0,'اسمش رو گذاشتی: «'+f[0]+'». ابر یه کم آروم‌تر شد. پژوهش‌ها نشون می‌دن دقیق اسم گذاشتن روی یه حس، از شدتش کم می‌کنه.',.6)}else{b.disabled=true;$('feelM').textContent=f[0]==='هیچی، خوبم'?'طوفان بالای سرته. «خوبم» یعنی فرار.':'این خیلی کلیه. دقیق‌ترش کن: دقیقاً از چی؟'}};
+ // final gate: ten words
+ const W10=LV.map((l,i)=>({w:l[1],i}));const ORDER=[1,5,4,2,0,3,7,6,8,9];let pk=[];
+ const have=i=>done.includes(i)||(i===9&&calm)||hintLv>=2;
+ function renderMeta(){$('mS').innerHTML=Array.from({length:10},(_,i)=>'<span>'+(pk[i]!=null?W10[pk[i]].w:'')+'</span>').join('');
+  $('mB').innerHTML=W10.map((x,i)=>have(i)?'<button class="pw" data-i="'+i+'"'+(pk.includes(i)?' disabled':'')+'>'+x.w+'</button>':'<button class="pw" disabled title="Level '+(i+1)+'">؟</button>').join('')}
+ $('mB').onclick=e=>{const b=e.target.closest('.pw');if(!b||b.disabled||pk.length>=10)return;pk.push(+b.dataset.i);renderMeta()};
+ $('mDel').onclick=()=>{pk.pop();renderMeta()};
+ $('mGo').onclick=()=>{const miss=W10.filter((x,i)=>!have(i)).length;const s=pk.map(i=>W10[i].w).join(' ');
+  if(s===ORDER.map(i=>W10[i].w).join(' ')){show(null);openDoor('درِ قلعه باز شد. بیرون، صبح شده.');dawnK=.001;return}
+  const el=$('mS');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');$('mM').textContent=miss?'هنوز '+fd(miss)+' تا کلمه کم داری. از منو levelهای قبلی رو تموم کن، یا راهنمای آخر رو ببین.':'نه، این نبود. جمله‌ای که از اولِ قصه دنبالش بودیم…'};
+ const inter=[
+  {pos:{x:PIL[0].x,z:PIL[0].z+.75},r:.4,top:2,meshes:[],label:()=>step===0?'R: اسمش رو بذار':null,info:()=>step===0?'R، Recognize، ببین: حسی که الان داری اسمش چیه؟':null,focus:()=>({x:PIL[0].x,y:1.2,z:PIL[0].z,az:0,el:.2,d:2.6}),
+   act(){$('feelM').textContent='';$('feelB').innerHTML=FEEL.map((f,i)=>'<button class="opt" data-i="'+i+'">'+f[0]+'</button>').join('');show('ovFeel')}},
+  {pos:{x:PIL[1].x,z:PIL[1].z+.75},r:.4,top:2,meshes:[],label:()=>step===1&&umb?'A: چتر رو ببند':null,info:()=>step===1?(umb?'A، Allow، اجازه بده: چتر رو ببند و بذار بباره.':'تکون نخور… '+fd(Math.max(0,Math.ceil(10-allowT)))+' ثانیه'):null,focus:()=>step===1&&umb?{x:PIL[1].x,y:1.2,z:PIL[1].z,az:0,el:.25,d:2.8}:null,
+   act(){umb=false;H.body.remove(um);allowT=0;toast('چتر رو بستی. حالا ده ثانیه زیرِ بارون تکون نخور. فقط بذار باشه.',3200)}},
+  {pos:{x:PIL[2].x,z:PIL[2].z+.75},r:.4,top:2,meshes:[],label:()=>step===2?'I: ردِ آب رو نگاه کن':null,info:()=>step===2?'I، Investigate، ریشه‌یابی کن: ردِ آب روی زمین به سه تا چیز می‌رسه.':null,focus:()=>({x:PIL[2].x,y:1.2,z:PIL[2].z,az:0,el:.2,d:2.6}),
+   act(){toast('ردِ آب روی زمین سه شاخه شد. دنبالش کن: یه کیسه، یه چمدون، یه نقاب.',3000)}},
+  {pos:{x:PIL[3].x,z:PIL[3].z+.8},r:.45,top:2,meshes:[],label:()=>step===3&&sitT<0?'N: کنارش بشین':null,info:()=>step===3?'N، Nurture، نوازش کن: ابر اومده پایین، کنارِ ستون. ازش فرار نکن؛ کنارش بشین.':null,focus:()=>step===3?{x:PIL[3].x,y:.9,z:PIL[3].z,az:0,el:.35,d:3}:null,
+   act(){sitT=0;toast('کنارِ ابر نشستی. همون حرفی رو بهش بزن که به یه دوستِ نگران می‌زدی…',3200)}},
+  {pos:{x:-3.6,z:2.6},r:.4,top:1.2,meshes:[ph],label:()=>calm?null:'یه نگاهِ کوچیک به گوشی',info:()=>null,act(){grow(.18,'یه لحظه حالت بهتر شد… و ابر بزرگ‌تر شد. «تسلیمِ حسِ خوب شدن»، همون موتورِ اهمال‌کاری.')}},
+  {pos:{x:0,z:-3.4},r:.4,top:2.6,meshes:[],label:()=>doorTarget?null:'درِ قلعه',info:()=>doorTarget?null:calm?'روی در ده تا جای خالی هست.':'تا طوفان هست، در دیده نمی‌شه.',focus:()=>calm&&!doorTarget?{x:0,y:1.4,z:-4.1,az:0,el:.1,d:3}:null,
+   act(){if(!calm){toast('اول طوفان. در فقط وقتی پیدا می‌شه که آسمون آروم بشه.',2600);return}pk=[];$('mM').textContent='کلمه‌هایی که از هر level گرفتی رو به ترتیب بچین.';renderMeta();show('ovMeta')}}];
+ RO.forEach(o=>inter.push({pos:{x:o.x,z:o.z},r:.5,top:1,meshes:[],label:()=>step===2&&!roots[o.k]?'نگاهش کن':null,info:()=>step===2&&!roots[o.k]?o.t:null,focus:()=>null,
+  act(){roots[o.k]=1;note(o.t,'<p>ریشه‌ی این حس:</p><p><b>'+o.r+'</b></p>');if(roots.sack&&roots.suit&&roots.mask)setTimeout(()=>{show(null);stepDone(2,'حس اسم داره و ریشه داره. «من ترسم» نه؛ «من دارم ترس رو تجربه می‌کنم.» حالا برو سراغِ N.',.25)},1600)}}));
+ return{g,sub,
+  hints:['فرار کردن طوفان رو بزرگ‌تر می‌کنه. سراغِ ستون‌های R، A، I، N برو، به ترتیب.','R: اسمِ دقیقِ حس رو انتخاب کن. A: چتر رو ببند و ده ثانیه تکون نخور. I: ردِ آب رو تا سه تا شیء دنبال کن. N: کنارِ ابر بشین.','جمله‌ی در: «اهمال‌کاری یه مشکلِ مدیریتِ زمان نیست، یه مشکلِ مدیریتِ احساسه.» حالا همه‌ی کلمه‌ها رو داری.'],
+  win:['',''],end:true,
+  obs:()=>PIL.map(p=>({x:p.x,z:p.z,hx:.32,hz:.32})).concat([{x:-3.8,z:3.3,hx:.72,hz:.25}]),inter,
+  update(dt){const tgtP=step===3||calm?{x:PIL[3].x,y:calm?4.5:1.35,z:PIL[3].z+.05}:{x:P.x,y:3.5,z:P.z-1.3};cloud.position.x+=(tgtP.x-cloud.position.x)*Math.min(1,dt*(step===3?1.5:2.5));cloud.position.z+=(tgtP.z-cloud.position.z)*Math.min(1,dt*(step===3?1.5:2.5));cloud.position.y+=(tgtP.y-cloud.position.y)*Math.min(1,dt*1.5);
+   const sc=(step===3?.55:.7)+S*.55;cloud.scale.setScalar(cloud.scale.x+(sc-cloud.scale.x)*Math.min(1,dt*2));cM.color.setRGB(.23+(1-S)*.45,.24+(1-S)*.45,.27+(1-S)*.45);cEyes.forEach(e=>e.visible=!calm);
+   if(calm){cM.transparent=true;cM.opacity=Math.max(0,cM.opacity-dt*.4)}
+   // flee: moving for long, hiding under the awning
+   if(!calm){if(P.move&&step!==1){fleeT+=dt}else fleeT=Math.max(0,fleeT-dt*2);fleeCd=Math.max(0,fleeCd-dt);
+    if(fleeT>3&&fleeCd<=0){fleeT=0;fleeCd=6;grow(.1,'هر چی بیشتر فرار کنی، طوفان بزرگ‌تر می‌شه.')}
+    const ua=P.x>3.1&&Math.abs(P.z)<1.1;if(ua&&!underAwn)grow(.15,'زیرِ سایبون قایم شدی… ولی ابر هم اومد بالای سرِ سایبون، و بزرگ‌تر.');underAwn=ua}
+   // allow: stand still in the rain
+   if(step===1&&!umb){if(P.move){if(allowT>.6)toast('فرار کردی. دوباره، فقط وایسا.',1500);allowT=0}else{allowT+=dt;if(allowT>=10)stepDone(1,'ده ثانیه موندی و فرار نکردی. بارون هنوز می‌باره، ولی آروم‌تر. حس‌ها میان و می‌رن.',.4)}}
+   // investigate: glowing trail
+   RO.forEach(o=>{o.glow.material.opacity=step===2&&!roots[o.k]?.35+.25*Math.sin(clock*3):0});
+   // nurture
+   if(sitT>=0&&!calm){sitT+=dt;if(sitT>3.5){calm=true;S=0;sitT=-1;step=4;PIL[3].mat.color.set('#9be3c1');mood(true);bow.visible=true;beep([523,659,784,1046]);toast('ابر آروم شد و بارید. طوفان تموم شد. آخرین کلمه‌ی رمزِ کلی: «احساسه». حالا برو سراغِ درِ قلعه.',4600)}}
+   if(bow.visible)bow.children.forEach(m=>m.material.opacity=Math.min(.75,m.material.opacity+dt*.3));
+   // rain
+   const inten=calm?Math.max(0,.4-(dawnK||0)):Math.max(S,step===1&&!umb?.9:0),n=Math.floor(NR*inten);rainM.opacity=.25+inten*.5;
+   for(let i=0;i<NR;i++){const d=drops[i];d.y-=d.v*dt;if(d.y<0){d.y=3.4;d.x=(Math.random()-.5)*7;d.z=(Math.random()-.5)*7}const cx=cloud.position.x,cz=cloud.position.z,on=i<n;const x=cx+d.x,z=cz+d.z,y=on?d.y:-5;rp.set([x,y,z,x+.03,y-.28,z],i*6)}rg.attributes.position.needsUpdate=true;
+   // lightning
+   flashT-=dt;if(!calm&&S>.45&&flashT<=0&&Math.random()<dt*.5*S){flash.intensity=3;flashT=.12;if(Math.random()<.5)beep([90])}flash.intensity=Math.max(0,flash.intensity-dt*18);
+   // dawn
+   if(dawnK>0){dawnK=Math.min(1,dawnK+dt*.35)}const bgc=night.clone().lerp(new THREE.Color('#2a3550'),calm?.6:0).lerp(dawn,dawnK);scene.background.copy(bgc);scene.fog.color.copy(bgc);
+   $('objS').textContent=(calm?'':sub+' ')+stepTxt()},
+  dispose(){scene.remove(cloud);scene.remove(rain);scene.remove(flash);H.body.remove(um);scene.background=oldBg;scene.fog.color=oldBg.clone()}}}
+
+/* mode switching */
+const LV=[[buildA,'زمان'],[buildB,'اهمال‌کاری'],[buildC,'مدیریتِ'],[buildR2,'نیست،'],[buildR3,'مشکلِ'],[buildR4,'یه'],[buildR5,'مشکلِ'],[buildR6,'یه'],[buildR7,'مدیریتِ'],[buildR8,'احساسه']];
+const INTRO=[
+ 'بیا از اول شروع کنیم: اهمال‌کاری اصلاً چیه؟ هر عقب انداختنی اهمال‌کاری نیست. گاهی دلیلِ موجه داریم، گاهی اصلاً خبر نداریم. توی این مرحله یاد می‌گیری اهمال‌کاری رو از بقیه‌ی عقب انداختن‌ها جدا کنی.',
+ 'اهمال‌کاری یعنی کاری رو بی‌دلیل عقب بندازی، با این‌که می‌دونی به ضررته. ولی همیشه شبیهِ تنبلی نیست! بعضی وقتا اهمال‌کاری سازنده‌ست: کلی کارِ مفید انجام می‌دیم، فقط نه اون کاری که باید. این مرحله درباره‌ی همین نوعِ اهمال‌کاریه.',
+ 'همه‌ی کارها یه‌اندازه فوری نیستن و یه‌اندازه مهم نیستن. این مرحله درباره‌ی اولویت‌بندیه: این‌که کارهایی که بلندتر داد می‌زنن چطور جای کارهای مهم رو می‌گیرن.',
+ 'بعد از هر بار عقب انداختن، یه صدایی توی سرمون شروع می‌کنه به سرزنش. این مرحله درباره‌ی شرمه: این‌که چرا اهمال‌کاری یه باگِ رفتاریه، نه یه نقصِ شخصیتی، و چرا سرزنشِ خودمون اوضاع رو بدتر می‌کنه.',
+ '«از پسش برنمیام.» این جمله خیلی وقتا قبل از شروع، کار رو تموم می‌کنه. این مرحله درباره‌ی خودکارآمدیه: باور به این‌که از پسِ یه کارِ مشخص برمیای، و این‌که این باور از کجا ساخته می‌شه.',
+ 'کمال‌گرایی معمولاً شبیهِ تلاشِ زیاده، نه اهمال‌کاری. ولی خیلی وقتا «هنوز آماده نیستم» همون اهمال‌کاریه، فقط با لباسِ مرتب‌تر. این مرحله درباره‌ی کمال‌گرایی و لوپِ آماده شدنه.',
+ 'بعضی بهانه‌ها اون‌قدر منطقی‌ان که خودمون هم باورشون می‌کنیم. این مرحله درباره‌ی مکانیسم‌های دفاعی و ردپای بچگی توی اهمال‌کاریه.',
+ 'چرا با این‌که می‌دونیم، باز هم گوشی رو برمی‌داریم؟ این مرحله درباره‌ی رفتارگراییه: این‌که مغزمون چطور برای اهمال‌کاری جایزه می‌گیره.',
+ 'چرا فقط شبِ امتحان انگیزه داریم؟ انگیزه یه حسِ جادویی نیست؛ یه فرمول با چهار عامله. این مرحله درباره‌ی فرمولِ انگیزه‌ست و پیچ‌هایی که خودت می‌تونی بچرخونی.',
+ 'آخرین مرحله. ما از کار فرار نمی‌کنیم، از یه احساس فرار می‌کنیم. اینجا با همون احساس روبه‌رو می‌شی.'];
+function intro(m){$('inH').textContent='Level '+(m+1);$('inP').textContent=INTRO[m];const ok=!!LV[m][0];$('inGo').disabled=!ok;$('inGo').textContent=ok?'بریم':'به‌زودی';$('inGo').onclick=()=>{if(m!==mode||!L)setMode(m);else show(null)};show('ovIntro')}
+$('inMenu').onclick=()=>{renderMenu();show('ovMenu')};$('endMenu').onclick=()=>{renderMenu();show('ovMenu')};$('endAgain').onclick=()=>{setMode(0);intro(0)};
+let done=[];try{done=JSON.parse(localStorage.getItem('castleDone')||'[]')}catch(e){}
+function renderMenu(){$('lvls').innerHTML=LV.map((l,i)=>'<button class="lv'+(i===mode?' cur':'')+(done.includes(i)?' done':'')+'" data-l="'+i+'"'+(l[0]?'':' data-soon="1"')+'><span>Level '+(i+1)+'</span><small>'+(l[0]?(done.includes(i)?'«'+l[1]+'»':i===mode?'الان اینجایی':'باز'):'به‌زودی')+'</small></button>').join('');
+ $('meta').innerHTML=LV.map((l,i)=>done.includes(i)?'<span>'+l[1]+'</span>':'<span class="q">؟</span>').join('')}
+$('lvls').onclick=e=>{const b=e.target.closest('.lv');if(!b)return;intro(+b.dataset.l)};
+$('menuBtn').onclick=()=>{renderMenu();show('ovMenu')};
+function setMode(m){mode=m;if(L){scene.remove(L.g);if(L.dispose)L.dispose()}P.carry=null;L=LV[m][0]();scene.add(L.g);
+ Object.assign(P,{x:0,z:2.8,ry:0,walkTo:null,pend:null,idle:0});focus=null;focusBlock=null;uAz=.55;uEl=.95;uZ=1;doorTarget=0;door=0;won=false;hintLv=0;hintsUsed=0;t0=clock;mood(false);
+ $('objK').textContent='قلعه‌ی فردا';$('roomH').textContent='Level '+(m+1);if(L.intro)setTimeout(()=>toast(L.intro),400);$('objT').textContent='Level '+(m+1);$('objT').style.direction='ltr';$('objT').style.textAlign='right';$('objS').textContent=L.sub;
+ show(null);try{history.replaceState(null,'','#level-'+(m+1))}catch(e){}}
+$('resetBtn').onclick=()=>setMode(mode);$('freeBtn').onclick=freeCam;
+$('hintBtn').onclick=()=>{hintsUsed=Math.max(hintsUsed,hintLv+1);$('hintTxt').textContent=L.hints[hintLv];$('hintMore').style.display=hintLv<2?'':'none';show('ovHint')};
+$('hintMore').onclick=()=>{hintLv=Math.min(2,hintLv+1);hintsUsed=Math.max(hintsUsed,hintLv+1);$('hintTxt').textContent=L.hints[hintLv];$('hintMore').style.display=hintLv<2?'':'none'};
+$('winNext').onclick=()=>{const n=mode+1;if(LV[n]&&LV[n][0]){setMode(n);intro(n)}else{renderMenu();show('ovMenu')}};$('winAgain').onclick=()=>setMode(mode);$('winMenu').onclick=()=>{renderMenu();show('ovMenu')};
+['d0','d1','d2'].forEach((d,i)=>$(d).addEventListener('input',e=>{if(e.target.value&&i<2)$('d'+(i+1)).focus()}));
+for(let i=0;i<7;i++)$('c'+i).addEventListener('input',e=>{if(e.target.value&&i<6)$('c'+(i+1)).focus()});$('cIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('cGo').click()});
+$('digs').addEventListener('keydown',e=>{if(e.key==='Enter')$('lockGo').click()});
+
+/* interaction */
+function nearest(){let best=null,bd=1e9;for(const it of L.inter){if(!it.label())continue;const p=it.pos,d=Math.hypot(P.x-p.x,P.z-p.z)-it.r;if(d<.85&&d<bd){bd=d;best=it}}return best}
+function act(){if(busy()||won)return;const it=nearest();if(it){const p=it.pos;P.ry=Math.atan2(p.x-P.x,p.z-P.z);it.act()}else if(L.drop&&L.drop()){}}
+function walk(to,pend){P.walkTo=to;P.pend=pend}
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(busy()){if(k==='escape')show(null);return}K[k]=true;if(k===' '||k==='enter'){e.preventDefault();act()}if(k==='escape')freeCam();if(k.startsWith('arrow'))e.preventDefault()});
+addEventListener('keyup',e=>{K[e.key.toLowerCase()]=false});addEventListener('blur',()=>{for(const k in K)K[k]=false});
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();let down=null;
+cv.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,drag:false};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!down)return;if(Math.abs(e.clientX-down.x)>6||Math.abs(e.clientY-down.y)>6)down.drag=true;if(down.drag)rot(-(e.clientX-(down.lx??down.x))*.008,(e.clientY-(down.ly??down.y))*.006);down.lx=e.clientX;down.ly=e.clientY});
+cv.addEventListener('wheel',e=>{e.preventDefault();if(focus)fOff.d=clamp(fOff.d+e.deltaY*.004,-1.5,3);else uZ=clamp(uZ+e.deltaY*.001,.55,1.5)},{passive:false});
+cv.addEventListener('pointerup',e=>{const d=down;down=null;if(!d||d.drag||busy()||won)return;const r=cv.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,cam);
+ const all=L.inter.flatMap(it=>it.meshes.map(m=>({m,it})));const hits=ray.intersectObjects(all.map(a=>a.m),false);
+ if(hits.length){if(L.pick&&L.pick(hits[0].object))return;const it=all.find(a=>a.m===hits[0].object).it;if(it.label()){const p=it.pos;if(Math.hypot(P.x-p.x,P.z-p.z)-it.r<.85){P.ry=Math.atan2(p.x-P.x,p.z-P.z);it.act()}else walk({x:p.x,z:p.z},it);return}}
+ const fh=ray.intersectObject(floor);if(fh.length)walk({x:fh[0].point.x,z:fh[0].point.z},null)});
+const hold=(id,dx,dy)=>{const b=$(id);let iv=0;b.addEventListener('pointerdown',()=>{iv=setInterval(()=>rot(dx,dy),16)});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>clearInterval(iv)))};
+hold('rotL',.035,0);hold('rotR',-.035,0);hold('rotU',0,.02);hold('rotD',0,-.02);$('actBtn').onclick=act;
+
+/* loop */
+function collide(){for(const o of L.obs()){const cx=Math.max(o.x-o.hx,Math.min(P.x,o.x+o.hx)),cz=Math.max(o.z-o.hz,Math.min(P.z,o.z+o.hz)),dx=P.x-cx,dz=P.z-cz,d=Math.hypot(dx,dz);if(d<PR){if(d>1e-4){P.x=cx+dx/d*PR;P.z=cz+dz/d*PR}else P.z=o.z+o.hz+PR}}}
+function lerpA(a,b,t){let d=((b-a+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;return a+d*t}
+function step(dt){clock+=dt;
+ if(K.q)rot(1.6*dt,0);if(K.e)rot(-1.6*dt,0);if(K.r)rot(0,1*dt);if(K.f)rot(0,-1*dt);const az=C.az;
+ let ix=0,iz=0;if(!busy()&&!won){if(K.w||K.arrowup)iz+=1;if(K.s||K.arrowdown)iz-=1;if(K.d||K.arrowright)ix+=1;if(K.a||K.arrowleft)ix-=1}
+ let mx=-Math.sin(az)*iz+Math.cos(az)*ix,mz=-Math.cos(az)*iz-Math.sin(az)*ix;
+ if(ix||iz){P.walkTo=null;P.pend=null}else if(P.walkTo&&!busy()){const dx=P.walkTo.x-P.x,dz=P.walkTo.z-P.z,d=Math.hypot(dx,dz),stop=P.pend?P.pend.r+.6:.08;
+  if(d<stop||(P.stuck>.6)){const it=P.pend;P.walkTo=null;P.pend=null;P.stuck=0;if(it&&it.label()&&d<stop+.3){P.ry=Math.atan2(dx,dz);it.act()}}else{mx=dx/d;mz=dz/d}}
+ const ml=Math.hypot(mx,mz);P.move=ml>0;P.idle=P.move?0:P.idle+dt;
+ if(ml){mx/=ml;mz/=ml;const sp=(P.carry?1.9:2.5)*(L.speed?L.speed():1),ox=P.x,oz=P.z;P.x+=mx*sp*dt;P.z+=mz*sp*dt;P.ry=lerpA(P.ry,Math.atan2(mx,mz),Math.min(1,dt*12));collide();
+  const lim=(L.gate?L.gate():door>.85)&&Math.abs(P.x)<.85;P.x=Math.max(-4.6,Math.min(4.6,P.x));P.z=Math.min(3.6,Math.max(lim?-5:-3.62,P.z));if(P.z<-3.62)P.x=Math.max(-.5,Math.min(.5,P.x));
+  P.stuck=Math.hypot(P.x-ox,P.z-oz)<sp*dt*.3?(P.stuck||0)+dt:0}
+ if(P.z<-4.3&&!won){won=true;const w=L.win,s=Math.round(clock-t0);if(!done.includes(mode)){done.push(mode);try{localStorage.setItem('castleDone',JSON.stringify(done))}catch(e){}}$('winH').textContent=w[0];$('winP').textContent=w[1];$('winW').innerHTML='کلمه‌ی رمزِ کلی: <b>«'+LV[mode][1]+'»</b> · '+fd(done.length)+' از ۱۰ کلمه';const nx=LV[mode+1];$('winNext').textContent=nx&&nx[0]?'Level '+(mode+2):'منو';$('winS').textContent='زمان: '+fd(Math.floor(s/60))+':'+fd(String(s%60).padStart(2,'0'))+' · راهنما: '+(hintsUsed?fd(hintsUsed)+' بار':'هیچی');if(L.end){$('endS').textContent='زمانِ این level: '+fd(Math.floor(s/60))+':'+fd(String(s%60).padStart(2,'0'))+' · '+fd(done.length)+' از ۱۰ level تموم شده';show('ovEnd')}else show('ovWin')}
+ door+=(doorTarget-door)*Math.min(1,dt*2.5);hinge.rotation.y=-1.75*door;doorLight.intensity=door*1.4;
+ L.update(dt);
+ P.t+=dt*(P.move?9:0);H.g.position.set(P.x,0,P.z);H.g.rotation.y=P.ry;
+ const sw=P.move?Math.sin(P.t):0;H.feet[0].position.z=.03+sw*.12;H.feet[1].position.z=.03-sw*.12;H.body.position.y=P.move?Math.abs(Math.sin(P.t))*.05:0;H.body.rotation.z=sw*.04;H.body.rotation.x=H.happy?0:.07+(L.hunch?L.hunch():0);H.body.scale.y=1+(P.move?0:Math.sin(clock*2)*.012);
+ if(focus){const f=focus.focus&&focus.focus(),p=focus.pos;if(!f||Math.hypot(P.x-p.x,P.z-p.z)-focus.r>1.25)focus=null}
+ if(focusBlock){const p=focusBlock.pos;if(Math.hypot(P.x-p.x,P.z-p.z)-focusBlock.r>1.25)focusBlock=null}
+ if(!focus&&!busy()&&!won){let bf=null,bd=1e9;for(const it of L.inter){if(!it.focus||it===focusBlock)continue;const f=it.focus();if(!f||(f.soft&&P.idle<.35))continue;const p=it.pos,d=Math.hypot(P.x-p.x,P.z-p.z)-it.r;if(d<.8&&d<bd){bd=d;bf=it}}if(bf){focus=bf;fOff={az:0,el:0,d:0}}}
+ $('freeBtn').hidden=!focus;fade+=((focus?.22:1)-fade)*Math.min(1,dt*5);HM.forEach(m=>{m.opacity=fade;m.depthWrite=fade>.9});
+ const ff=focus&&focus.focus(),gl=ff?{x:ff.x,y:ff.y,z:ff.z,az:(ff.az??uAz)+fOff.az,el:clamp(ff.el+fOff.el,.06,1.42),d:Math.max(1.5,ff.d+fOff.d)}:{x:P.x*.55,y:.4,z:P.z*.55,az:uAz,el:uEl,d:base*uZ};
+ const kc=Math.min(1,dt*3.2);C.x+=(gl.x-C.x)*kc;C.y+=(gl.y-C.y)*kc;C.z+=(gl.z-C.z)*kc;C.el+=(gl.el-C.el)*kc;C.d+=(gl.d-C.d)*kc;C.az=lerpA(C.az,gl.az,kc);
+ const ce=Math.cos(C.el);cam.position.set(C.x+Math.sin(C.az)*ce*C.d,C.y+Math.sin(C.el)*C.d,C.z+Math.cos(C.az)*ce*C.d);cam.lookAt(C.x,C.y,C.z);
+ const it=busy()||won?null:nearest(),pr=$('prompt');
+ if(it){const p=it.pos,v=new THREE.Vector3(p.x,it.top,p.z).project(cam);pr.style.display='block';pr.style.left=((v.x*.5+.5)*stage.clientWidth)+'px';pr.style.top=((-v.y*.5+.5)*stage.clientHeight)+'px';pr.innerHTML=it.label()+'<kbd>Space</kbd>'}
+ else if(P.carry&&!busy()){pr.style.display='block';const v=new THREE.Vector3(P.x,2.2,P.z).project(cam);pr.style.left=((v.x*.5+.5)*stage.clientWidth)+'px';pr.style.top=((-v.y*.5+.5)*stage.clientHeight)+'px';pr.innerHTML='زمین بذار<kbd>Space</kbd>'}else pr.style.display='none';
+ const inf=it&&it.info?it.info():(P.carry?'جعبه‌ی '+fd(P.carry.n)+': «'+P.carry.t+'»':null),ib=$('info');ib.style.display=inf?'block':'none';if(inf)ib.textContent=inf}
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();base=w/h<1?18.5:w/h<1.5?15:13}
+const ro=new ResizeObserver(resize);ro.observe(stage);resize();
+let last=performance.now();function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;step(dt);R.render(scene,cam);requestAnimationFrame(frame)}
+const start=()=>{const h=+(location.hash.match(/^#level-(\d+)$/)||[])[1];const m0=h>=1&&h<=LV.length&&LV[h-1][0]?h-1:0;setMode(m0);intro(m0);requestAnimationFrame(frame)};
+window.claude?.hot?.snapshot?.(()=>({mode,done}));
+Promise.race([document.fonts?document.fonts.load('800 40px Vazirmatn'):Promise.resolve(),new Promise(r=>setTimeout(r,2500))]).then(start,start);
+}
+try{main()}catch(e){document.getElementById('ovLoad').innerHTML='<p>یه مشکلی پیش اومد: '+e.message+'</p>'}
+}
+</script>
+</body>
+</html>

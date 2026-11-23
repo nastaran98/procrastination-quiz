@@ -807,7 +807,10 @@ $('digs').addEventListener('keydown',e=>{if(e.key==='Enter')$('lockGo').click()}
 
 /* interaction */
 function nearest(){let best=null,bd=1e9;for(const it of L.inter){if(!it.label())continue;const p=it.pos,d=Math.hypot(P.x-p.x,P.z-p.z)-it.r;if(d<.85&&d<bd){bd=d;best=it}}return best}
-function act(){if(busy()||won)return;const it=nearest();if(it){const p=it.pos;P.ry=Math.atan2(p.x-P.x,p.z-P.z);it.act()}else if(L.drop&&L.drop()){}}
+const exitOpen=()=>!won&&(L.gate?L.gate():doorTarget>0);
+function releaseFocus(){if(focus){focusBlock=focus;focus=null}}
+function walkExit(){releaseFocus();P.pend=null;P.walkTo={x:0,z:-3.3,next:{x:0,z:-4.9}}}
+function act(){if(busy()||won)return;const it=nearest();if(it){const p=it.pos;P.ry=Math.atan2(p.x-P.x,p.z-P.z);it.act()}else if(L.drop&&L.drop()){}else if(exitOpen())walkExit()}
 function walk(to,pend){P.walkTo=to;P.pend=pend}
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(busy()){if(k==='escape')show(null);return}K[k]=true;if(k===' '||k==='enter'){e.preventDefault();act()}if(k==='escape')freeCam();if(k.startsWith('arrow'))e.preventDefault()});
 addEventListener('keyup',e=>{K[e.key.toLowerCase()]=false});addEventListener('blur',()=>{for(const k in K)K[k]=false});
@@ -818,7 +821,7 @@ cv.addEventListener('wheel',e=>{e.preventDefault();if(focus)fOff.d=clamp(fOff.d+
 cv.addEventListener('pointerup',e=>{const d=down;down=null;if(!d||d.drag||busy()||won)return;const r=cv.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,cam);
  const all=L.inter.flatMap(it=>it.meshes.map(m=>({m,it})));const hits=ray.intersectObjects(all.map(a=>a.m),false);
  if(hits.length){if(L.pick&&L.pick(hits[0].object))return;const it=all.find(a=>a.m===hits[0].object).it;if(it.label()){const p=it.pos;if(Math.hypot(P.x-p.x,P.z-p.z)-it.r<.85){P.ry=Math.atan2(p.x-P.x,p.z-P.z);it.act()}else walk({x:p.x,z:p.z},it);return}}
- const fh=ray.intersectObject(floor);if(fh.length)walk({x:fh[0].point.x,z:fh[0].point.z},null)});
+ const fh=ray.intersectObject(floor);if(fh.length){const q=fh[0].point;if(exitOpen()&&q.z<-2.9&&Math.abs(q.x)<1.6){walkExit();return}releaseFocus();walk({x:q.x,z:q.z},null)}else if(focus)releaseFocus()});
 const hold=(id,dx,dy)=>{const b=$(id);let iv=0;b.addEventListener('pointerdown',()=>{iv=setInterval(()=>rot(dx,dy),16)});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>clearInterval(iv)))};
 hold('rotL',.035,0);hold('rotR',-.035,0);hold('rotU',0,.02);hold('rotD',0,-.02);$('actBtn').onclick=act;
 
@@ -829,8 +832,8 @@ function step(dt){clock+=dt;
  if(K.q)rot(1.6*dt,0);if(K.e)rot(-1.6*dt,0);if(K.r)rot(0,1*dt);if(K.f)rot(0,-1*dt);const az=C.az;
  let ix=0,iz=0;if(!busy()&&!won){if(K.w||K.arrowup)iz+=1;if(K.s||K.arrowdown)iz-=1;if(K.d||K.arrowright)ix+=1;if(K.a||K.arrowleft)ix-=1}
  let mx=-Math.sin(az)*iz+Math.cos(az)*ix,mz=-Math.cos(az)*iz-Math.sin(az)*ix;
- if(ix||iz){P.walkTo=null;P.pend=null}else if(P.walkTo&&!busy()){const dx=P.walkTo.x-P.x,dz=P.walkTo.z-P.z,d=Math.hypot(dx,dz),stop=P.pend?P.pend.r+.6:.08;
-  if(d<stop||(P.stuck>.6)){const it=P.pend;P.walkTo=null;P.pend=null;P.stuck=0;if(it&&it.label()&&d<stop+.3){P.ry=Math.atan2(dx,dz);it.act()}}else{mx=dx/d;mz=dz/d}}
+ if(ix||iz){P.walkTo=null;P.pend=null;releaseFocus()}else if(P.walkTo&&!busy()){const dx=P.walkTo.x-P.x,dz=P.walkTo.z-P.z,d=Math.hypot(dx,dz),stop=P.pend?P.pend.r+.6:.08;
+  if(d<stop||(P.stuck>.6)){const it=P.pend,nx=P.walkTo.next;P.walkTo=nx&&d<stop+.2?nx:null;P.pend=null;P.stuck=0;if(it&&it.label()&&d<stop+.3){P.ry=Math.atan2(dx,dz);it.act()}}else{mx=dx/d;mz=dz/d}}
  const ml=Math.hypot(mx,mz);P.move=ml>0;P.idle=P.move?0:P.idle+dt;
  if(ml){mx/=ml;mz/=ml;const sp=(P.carry?1.9:2.5)*(L.speed?L.speed():1),ox=P.x,oz=P.z;P.x+=mx*sp*dt;P.z+=mz*sp*dt;P.ry=lerpA(P.ry,Math.atan2(mx,mz),Math.min(1,dt*12));collide();
   const lim=(L.gate?L.gate():door>.85)&&Math.abs(P.x)<.85;P.x=Math.max(-4.6,Math.min(4.6,P.x));P.z=Math.min(3.6,Math.max(lim?-5:-3.62,P.z));if(P.z<-3.62)P.x=Math.max(-.5,Math.min(.5,P.x));
@@ -842,13 +845,14 @@ function step(dt){clock+=dt;
  const sw=P.move?Math.sin(P.t):0;H.feet[0].position.z=.03+sw*.12;H.feet[1].position.z=.03-sw*.12;H.body.position.y=P.move?Math.abs(Math.sin(P.t))*.05:0;H.body.rotation.z=sw*.04;H.body.rotation.x=H.happy?0:.07+(L.hunch?L.hunch():0);H.body.scale.y=1+(P.move?0:Math.sin(clock*2)*.012);
  if(focus){const f=focus.focus&&focus.focus(),p=focus.pos;if(!f||Math.hypot(P.x-p.x,P.z-p.z)-focus.r>1.25)focus=null}
  if(focusBlock){const p=focusBlock.pos;if(Math.hypot(P.x-p.x,P.z-p.z)-focusBlock.r>1.25)focusBlock=null}
- if(!focus&&!busy()&&!won){let bf=null,bd=1e9;for(const it of L.inter){if(!it.focus||it===focusBlock)continue;const f=it.focus();if(!f||(f.soft&&P.idle<.35))continue;const p=it.pos,d=Math.hypot(P.x-p.x,P.z-p.z)-it.r;if(d<.8&&d<bd){bd=d;bf=it}}if(bf){focus=bf;fOff={az:0,el:0,d:0}}}
+ if(!focus&&!busy()&&!won){let bf=null,bd=1e9;for(const it of L.inter){if(!it.focus||it===focusBlock)continue;const f=it.focus();if(!f||P.idle<(f.soft?.35:.2))continue;const p=it.pos,d=Math.hypot(P.x-p.x,P.z-p.z)-it.r;if(d<.8&&d<bd){bd=d;bf=it}}if(bf){focus=bf;fOff={az:0,el:0,d:0}}}
  $('freeBtn').hidden=!focus;fade+=((focus?.22:1)-fade)*Math.min(1,dt*5);HM.forEach(m=>{m.opacity=fade;m.depthWrite=fade>.9});
  const ff=focus&&focus.focus(),gl=ff?{x:ff.x,y:ff.y,z:ff.z,az:(ff.az??uAz)+fOff.az,el:clamp(ff.el+fOff.el,.06,1.42),d:Math.max(1.5,ff.d+fOff.d)}:{x:P.x*.55,y:.4,z:P.z*.55,az:uAz,el:uEl,d:base*uZ};
  const kc=Math.min(1,dt*3.2);C.x+=(gl.x-C.x)*kc;C.y+=(gl.y-C.y)*kc;C.z+=(gl.z-C.z)*kc;C.el+=(gl.el-C.el)*kc;C.d+=(gl.d-C.d)*kc;C.az=lerpA(C.az,gl.az,kc);
  const ce=Math.cos(C.el);cam.position.set(C.x+Math.sin(C.az)*ce*C.d,C.y+Math.sin(C.el)*C.d,C.z+Math.cos(C.az)*ce*C.d);cam.lookAt(C.x,C.y,C.z);
  const it=busy()||won?null:nearest(),pr=$('prompt');
  if(it){const p=it.pos,v=new THREE.Vector3(p.x,it.top,p.z).project(cam);pr.style.display='block';pr.style.left=((v.x*.5+.5)*stage.clientWidth)+'px';pr.style.top=((-v.y*.5+.5)*stage.clientHeight)+'px';pr.innerHTML=it.label()+'<kbd>Space</kbd>'}
+ else if(exitOpen()&&!busy()&&Math.hypot(P.x,P.z+4)<4.2){pr.style.display='block';const v=new THREE.Vector3(0,2.6,-4).project(cam);pr.style.left=((v.x*.5+.5)*stage.clientWidth)+'px';pr.style.top=((-v.y*.5+.5)*stage.clientHeight)+'px';pr.innerHTML='برو بیرون<kbd>Space</kbd>'}
  else if(P.carry&&!busy()){pr.style.display='block';const v=new THREE.Vector3(P.x,2.2,P.z).project(cam);pr.style.left=((v.x*.5+.5)*stage.clientWidth)+'px';pr.style.top=((-v.y*.5+.5)*stage.clientHeight)+'px';pr.innerHTML='زمین بذار<kbd>Space</kbd>'}else pr.style.display='none';
  const inf=it&&it.info?it.info():(P.carry?'جعبه‌ی '+fd(P.carry.n)+': «'+P.carry.t+'»':null),ib=$('info');ib.style.display=inf?'block':'none';if(inf)ib.textContent=inf}
 function resize(){const w=stage.clientWidth,h=stage.clientHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();base=w/h<1?18.5:w/h<1.5?15:13}
